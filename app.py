@@ -8,8 +8,9 @@ import speech_recognition as sr
 from pydub import AudioSegment
 import os
 import tempfile
-from langi import extract_text
 import yt_dlp
+import tempfile
+from langi import extract_text
 from pydub.utils import make_chunks
 from flask_mysqldb import MySQL
 from werkzeug.utils import secure_filename
@@ -17,6 +18,7 @@ import pdfplumber
 import bcrypt
 import re
 import logging
+import subprocess
 from dotenv import load_dotenv
 
 # Load environment variables from .env file (for local development)
@@ -40,20 +42,53 @@ app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'Rohan@2005')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'login')
 app.config['MYSQL_PORT'] = int(os.getenv('MYSQL_PORT', 3306))
-app.config['MYSQL_UNIX_SOCKET'] = None# Add port for TCP connection
+app.config['MYSQL_UNIX_SOCKET'] = None  # Add port for TCP connection
 mysql = MySQL(app)
 
 # API keys from environment variables
-GROQ_API_KEY = os.getenv('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')
+GROQ_API_KEY = os.getenv('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')  # Fix: Use environment variable properly
 
-# Configure Tesseract path (for local development; not needed on Render)
-TESSERACT_PATH = os.getenv('TESSERACT_PATH', '/usr/bin/tesseract')  # Default to Linux path
+# Configure Tesseract path
+try:
+    TESSERACT_PATH = subprocess.check_output(['which', 'tesseract']).decode().strip()
+    logger.info(f"Found Tesseract at: {TESSERACT_PATH}")
+except Exception as e:
+    logger.warning(f"Could not auto-detect Tesseract: {str(e)}")
+    # Try common paths
+    possible_paths = [
+        '/usr/bin/tesseract',
+        '/usr/local/bin/tesseract',
+        '/app/.apt/usr/bin/tesseract'
+    ]
+    TESSERACT_PATH = next((p for p in possible_paths if os.path.exists(p)), 
+                          os.getenv('TESSERACT_PATH', '/usr/bin/tesseract'))
+    logger.info(f"Using Tesseract path: {TESSERACT_PATH}")
+
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 
 # Create temp directory if it doesn't exist
 TEMP_DIR = os.path.join(os.getenv('RENDER_DISK_PATH', os.getcwd()), 'temp')
 if not os.path.exists(TEMP_DIR):
     os.makedirs(TEMP_DIR)
+
+# Create directories for templates and static files if they don't exist
+TEMPLATE_DIR = os.path.join(os.getcwd(), 'templates')
+STATIC_DIR = os.path.join(os.getcwd(), 'static')
+if not os.path.exists(TEMPLATE_DIR):
+    os.makedirs(TEMPLATE_DIR)
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR)
+
+# Implementation of extract_text function that was imported from langi
+def extract_text(image_file):
+    """Extract text from image using pytesseract"""
+    try:
+        image = Image.open(image_file)
+        text = pytesseract.image_to_string(image)
+        return text
+    except Exception as e:
+        logger.error(f"Error extracting text from image: {str(e)}")
+        return f"Error: {str(e)}"
 
 @app.route('/')
 def home():
@@ -491,6 +526,32 @@ def txtsumz():
         logger.error("Text summarization error: %s", str(e))
         return jsonify({"error": f"Failed to summarize text: {str(e)}"}), 500
 
-if __name__ == '__app__':
+# Tesseract check endpoint for debugging
+@app.route('/tesseract-check')
+def tesseract_check():
+    """Debug endpoint to check Tesseract installation"""
+    result = {
+        "env_path": os.getenv('TESSERACT_PATH', 'Not set'),
+        "current_path": pytesseract.pytesseract.tesseract_cmd,
+        "exists": os.path.exists(pytesseract.pytesseract.tesseract_cmd) if pytesseract.pytesseract.tesseract_cmd else False
+    }
+    
+    # Try to get version
+    try:
+        version = subprocess.check_output(['tesseract', '--version']).decode()
+        result["version"] = version
+    except Exception as e:
+        result["version_error"] = str(e)
+        
+    return jsonify(result)
+
+# Create a simple health check endpoint for Render
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for Render"""
+    return jsonify({"status": "healthy"}), 200
+
+if __name__ == '__main__':
+    # Fixed the name from '__app__' to '__main__'
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
