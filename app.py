@@ -447,6 +447,9 @@ def pdfimg():
                 logger.info("PDF temporary file removed")
             except Exception as e:
                 logger.error("Failed to remove temp PDF file: %s", str(e))
+@app.route('/chatbot', methods=['POST',"GET])
+def bot():
+   return render_template("chatbot.html")
 
 @app.route('/vidtotxt', methods=['POST'])
 def vidtotxt():
@@ -607,4 +610,4 @@ def txtsumz():
         return jsonify({"error": f"Failed to summarize text: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5010)
