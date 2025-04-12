@@ -421,7 +421,7 @@ a.text-sm.text-primary:hover {
                     </form>
 
                     <div class="mt-6 text-center">
-                        <p class="text-gray-600">Don't have an account? <a href="#"
+                        <p class="text-gray-600">Don't have an account? <a href="/register"
                                 class="text-primary hover:text-primary-dark font-medium hover:underline transition duration-300">Register</a>
                         </p>
                     </div>
@@ -509,7 +509,7 @@ a.text-sm.text-primary:hover {
 
                     console.log('Attempting login with:', email.value);
 
-                    fetch('http://127.0.0.1:5010/login', {
+                    fetch('http:/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -529,7 +529,7 @@ a.text-sm.text-primary:hover {
 
                             if (data.success) {
                                 alert('Login successful!');
-                                window.location.href = 'http://127.0.0.1:5010/main'; // Adjust to your main page URL
+                                window.location.href = '/main'; // Adjust to your main page URL
                             } else {
                                 alert('Login failed: ' + data.message);
                             }
