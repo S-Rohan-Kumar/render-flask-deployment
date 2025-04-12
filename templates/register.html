@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summarizer+ | Register</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        :root {
+    --primary: #8B5CF6;
+    --primary-dark: #7C3AED;
+    --secondary: #EC4899;
+    --accent: #6366F1;
+    --light: #E5E7EB;
+    --black: #000000;
+    --dark-surface: #0A0A0A;
+    --dark-card: #121212;
+    --dark-input: #1A1A1A;
+    --dark-border: #2A2A2A;
+    --text-light: #F9FAFB;
+    --text-muted: #9CA3AF;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--black);
+    min-height: 100vh;
+    color: var(--text-light);
+}
+
+.gradient-text {
+    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #2D1D60 0%, #4C1D95 100%);
+}
+
+.card {
+    background: var(--dark-card);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.4);
+}
+
+.input-field {
+    transition: all 0.3s ease;
+    border: 1px solid var(--dark-border);
+    background-color: var(--dark-input);
+    color: var(--text-light);
+}
+
+.input-field::placeholder {
+    color: var(--text-muted);
+}
+
+.input-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.feature-icon {
+    background: rgba(255, 255, 255, 0.1);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    margin-right: 16px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideIn 0.5s forwards;
+}
+
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.feature-item:nth-child(1) {
+    animation-delay: 0.2s;
+}
+
+.feature-item:nth-child(2) {
+    animation-delay: 0.4s;
+}
+
+.feature-item:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+.feature-item:nth-child(4) {
+    animation-delay: 0.8s;
+}
+
+.floating {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    }
+}
+
+.form-appear {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: formAppear 0.8s forwards;
+}
+
+@keyframes formAppear {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple:after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform .5s, opacity 1s;
+}
+
+.ripple:active:after {
+    transform: scale(0, 0);
+    opacity: .3;
+    transition: 0s;
+}
+
+/* Black theme specific styles */
+nav {
+    background-color: var(--black) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+    border-bottom: 1px solid var(--dark-border) !important;
+}
+
+nav button {
+    color: var(--text-muted) !important;
+}
+
+nav button:hover {
+    color: var(--text-light) !important;
+}
+
+form label {
+    color: var(--text-light) !important;
+}
+
+form p.text-gray-500, form p.text-gray-600, 
+.text-gray-700, .text-gray-600, .text-gray-500 {
+    color: var(--text-muted) !important;
+}
+
+.bg-white {
+    background-color: var(--dark-card) !important;
+}
+
+footer {
+    background-color: var(--black) !important;
+    border-top: 1px solid var(--dark-border) !important;
+}
+
+footer .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+
+footer .border-gray-800 {
+    border-color: var(--dark-border) !important;
+}
+
+.border-gray-200 {
+    border-color: var(--dark-border) !important;
+}
+
+button.border {
+    border-color: var(--dark-border) !important;
+    background-color: var(--dark-input) !important;
+}
+
+button.border:hover {
+    background-color: var(--dark-surface) !important;
+}
+
+a.text-primary {
+    color: var(--primary) !important;
+}
+
+a.text-primary:hover {
+    color: var(--primary-dark) !important;
+}
+
+input[type="checkbox"] {
+    background-color: var(--dark-input);
+    border-color: var(--dark-border);
+}
+
+.shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.text-gray-800, .text-gray-900 {
+    color: var(--text-light) !important;
+}
+
+.text-red-500 {
+    color: #F87171 !important;
+}
+
+.hover\:bg-gray-50:hover {
+    background-color: var(--dark-surface) !important;
+}
+    </style>
+</head>
+
+<body>
+    <nav class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center">
+                <h1 class="text-2xl font-bold gradient-text">Summarizer<span class="text-secondary">+</span></h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="px-4 py-2 rounded-lg text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-question-circle mr-1"></i> Help
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-12">
+        <div class="card flex flex-col md:flex-row max-w-5xl mx-auto overflow-hidden">
+            <!-- Left side - Features -->
+            <div class="gradient-bg p-8 md:p-12 md:w-2/5 text-white">
+                <div class="mb-6">
+                    <h2 class="text-3xl font-bold mb-8 animate__animated animate__fadeInLeft">Transform Your Media</h2>
+                    <p class="text-white text-opacity-90 mb-12 animate__animated animate__fadeInLeft animate__delay-1s">
+                        Access powerful AI-driven tools to extract and summarize content from any media format.</p>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Image to Text</h3>
+                            <p class="text-white text-opacity-80 text-sm">Extract text from any image with high accuracy
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-headphones"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Audio Transcription</h3>
+                            <p class="text-white text-opacity-80 text-sm">Convert speech to written text in seconds</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Video Processing</h3>
+                            <p class="text-white text-opacity-80 text-sm">Extract and transcribe content from video
+                                files</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Smart Summarization</h3>
+                            <p class="text-white text-opacity-80 text-sm">Get concise summaries with key points
+                                highlighted</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 text-center">
+                    <div class="floating inline-block">
+                        <i class="fas fa-magic text-4xl text-white text-opacity-90"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right side - Registration form -->
+            <div class="p-8 md:p-12 md:w-3/5 bg-white">
+                <div class="form-appear max-w-md mx-auto">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold mb-2">Create Your Account</h2>
+                        <p class="text-gray-600">Sign up to start using Summarizer+ today</p>
+                    </div>
+
+                    <form id="register-form" class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">First
+                                    Name</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-user text-gray-400"></i>
+                                    </div>
+                                    <input type="text" id="first-name"
+                                        class="input-field w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none"
+                                        placeholder="First name">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">Last
+                                    Name</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-user text-gray-400"></i>
+                                    </div>
+                                    <input type="text" id="last-name"
+                                        class="input-field w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none"
+                                        placeholder="Last name">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input type="email" id="email"
+                                    class="input-field w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none"
+                                    placeholder="Enter your email">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" id="password"
+                                    class="input-field w-full pl-10 pr-4 py-3 rounded-lg focus:outline-none"
+                                    placeholder="Create a password">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                                    id="toggle-password">
+                                    <i class="fas fa-eye text-gray-400"></i>
+                                </div>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Must be at least 8 characters with numbers and symbols
+                            </p>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input type="checkbox" id="terms" class="h-4 w-4 text-primary border-gray-300 rounded">
+                            <label for="terms" class="ml-2 block text-sm text-gray-700">I agree to the <a href="#"
+                                    class="text-primary hover:underline">Terms of Service</a> and <a href="#"
+                                    class="text-primary hover:underline">Privacy Policy</a></label>
+                        </div>
+
+                        <div>
+                            <button type="submit"
+                                class="btn-register btn-primary ripple pulse w-full px-6 py-3 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user-plus mr-2"></i> Register
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-600">Already have an account? <a href="http://127.0.0.1:5500/templates/login.html"
+                                class="text-primary hover:text-primary-dark font-medium hover:underline transition duration-300">Sign
+                                In</a>
+                        </p>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <p class="text-center text-sm text-gray-500 mb-4">Or sign up with</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button
+                                class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white hover:bg-gray-50 transition duration-300">
+                                <i class="fab fa-google text-red-500 mr-2"></i> Google
+                            </button>
+                            <button
+                                class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white hover:bg-gray-50 transition duration-300">
+                                <i class="fab fa-apple text-gray-800 mr-2"></i> Apple
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-900 text-white py-12 mt-20">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between mb-8">
+                <div class="mb-6 md:mb-0">
+                    <h2 class="text-2xl font-bold mb-4">Summarizer+</h2>
+                    <p class="text-gray-400 max-w-sm">Transform any media into text and get intelligent summaries in
+                        seconds.</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Product</h3>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><a href="#" class="hover:text-white transition duration-300">Features</a></li>
+                            <li><a href="#" class="hover:text-white transition duration-300">Pricing</a></li>
+                            <li><a href="#" class="hover:text-white transition duration-300">API</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Support</h3>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><a href="#" class="hover:text-white transition duration-300">Help Center</a></li>
+                            <li><a href="#" class="hover:text-white transition duration-300">Contact Us</a></li>
+                            <li><a href="#" class="hover:text-white transition duration-300">FAQs</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Legal</h3>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><a href="#" class="hover:text-white transition duration-300">Privacy Policy</a></li>
+                            <li><a href="#" class="hover:text-white transition duration-300">Terms of Service</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-gray-800 text-center text-gray-500">
+                <p>&copy; 2025 Summarizer+. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Toggle password visibility
+            const togglePassword = document.getElementById('toggle-password');
+            if (togglePassword) {
+                togglePassword.addEventListener('click', function () {
+                    const passwordInput = document.getElementById('password');
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    // Toggle icon
+                    const icon = this.querySelector('i');
+                    if (type === 'text') {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            }
+
+            // Registration form handling
+            const registerForm = document.getElementById('register-form');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    const firstName = document.getElementById('first-name');
+                    const lastName = document.getElementById('last-name');
+                    const email = document.getElementById('email');
+                    const password = document.getElementById('password');
+                    const terms = document.getElementById('terms');
+                    const registerButton = document.querySelector('.btn-register');
+
+                    // Basic validation
+                    if (!firstName.value || !lastName.value || !email.value || !password.value) {
+                        alert('All fields are required');
+                        return;
+                    }
+
+                    if (!terms.checked) {
+                        alert('You must agree to the Terms of Service and Privacy Policy');
+                        return;
+                    }
+
+                    // Show loading state
+                    registerButton.disabled = true;
+                    registerButton.textContent = 'Processing...';
+
+                    fetch('http://127.0.0.1:5002/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            fstname: firstName.value,
+                            lstname: lastName.value,
+                            email: email.value,
+                            password: password.value
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        registerButton.disabled = false;
+                        registerButton.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Register';
+
+                        if (data.success) {
+                            alert('Registration successful!');
+                            window.location.href = 'http://127.0.0.1:5002/login';
+                        } else {
+                            alert('Registration failed: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred during registration');
+                        registerButton.disabled = false;
+                        registerButton.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Register';
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
