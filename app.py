@@ -37,7 +37,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key_for_dev')
 # Database configuration from environment variables
 app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
-app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'preran123@#$')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'Rohan@2005')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'login')
 mysql = MySQL(app)
 
