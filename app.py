@@ -447,7 +447,7 @@ def pdfimg():
                 logger.info("PDF temporary file removed")
             except Exception as e:
                 logger.error("Failed to remove temp PDF file: %s", str(e))
-@app.route('/chatbot', methods=['POST',"GET"])
+@app.route('/chatbot', methods=['POST','GET'])
 def bot():
    return render_template("chatbot.html")
 
