@@ -553,7 +553,7 @@ input[type="checkbox"] {
                     registerButton.disabled = true;
                     registerButton.textContent = 'Processing...';
 
-                    fetch('http://127.0.0.1:5010/register', {
+                    fetch('/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -572,7 +572,7 @@ input[type="checkbox"] {
 
                         if (data.success) {
                             alert('Registration successful!');
-                            window.location.href = 'http://127.0.0.1:5010/login';
+                            window.location.href = '/login';
                         } else {
                             alert('Registration failed: ' + data.message);
                         }
