@@ -509,7 +509,7 @@ a.text-sm.text-primary:hover {
 
                     console.log('Attempting login with:', email.value);
 
-                    fetch('http://127.0.0.1:5002/login', {
+                    fetch('http://127.0.0.1:5002/templates/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -529,7 +529,7 @@ a.text-sm.text-primary:hover {
 
                             if (data.success) {
                                 alert('Login successful!');
-                                window.location.href = 'http://127.0.0.1:5002/main'; // Adjust to your main page URL
+                                window.location.href = 'http://127.0.0.1:5002/templates/main'; // Adjust to your main page URL
                             } else {
                                 alert('Login failed: ' + data.message);
                             }
