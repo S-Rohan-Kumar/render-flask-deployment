@@ -3,7 +3,7 @@ from flask_cors import CORS
 from PIL import Image
 import pytesseract
 from groq import Groq
-import moviepy.editor as moviepy
+import moviepy as moviepy
 import speech_recognition as sr
 from pydub import AudioSegment
 import os
