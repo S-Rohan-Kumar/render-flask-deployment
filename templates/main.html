@@ -1050,7 +1050,9 @@
         });
         //////////////////////////////////////////////////////
         // API endpoint base URL - update this to match your Flask server
-        const API_BASE_URL = 'http://localhost:5010';
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'  // Development environment
+    : '';  // Production environment (using relative URLs)
 
         // Tab functionality with animations
         document.addEventListener('DOMContentLoaded', function () {
