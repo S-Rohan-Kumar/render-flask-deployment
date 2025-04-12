@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: my-flask-app
+    env: python
+    plan: free
+    buildCommand: |
+      apt-get update && apt-get install -y tesseract-ocr ffmpeg libsm6 libxext6
+      pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT app2:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: MYSQL_HOST
+        fromDatabase:
+          name: my-mysql
+          property: host
+      - key: MYSQL_USER
+        fromDatabase:
+          name: my-mysql
+          property: user
+      - key: MYSQL_PASSWORD
+        fromDatabase:
+          name: my-mysql
+          property: password
+      - key: MYSQL_DB
+        fromDatabase:
+          name: my-mysql
+          property: database
+      - key: MYSQL_PORT
+        fromDatabase:
+          name: my-mysql
+          property: port
+
+databases:
+  - name: my-mysql
+    plan: free
