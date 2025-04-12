@@ -39,11 +39,12 @@ app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'Rohan@2005')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'login')
-app.config['MYSQL_PORT'] = int(os.getenv('MYSQL_PORT', 3306))  # Add port for TCP connection
+app.config['MYSQL_PORT'] = int(os.getenv('MYSQL_PORT', 3306))
+app.config['MYSQL_UNIX_SOCKET'] = None# Add port for TCP connection
 mysql = MySQL(app)
 
 # API keys from environment variables
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GROQ_API_KEY = os.getenv('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')
 
 # Configure Tesseract path (for local development; not needed on Render)
 TESSERACT_PATH = os.getenv('TESSERACT_PATH', '/usr/bin/tesseract')  # Default to Linux path
