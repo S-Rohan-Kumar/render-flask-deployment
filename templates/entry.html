@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summarizer+ | Smart Content Summarization</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            max-width: 800px;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 1rem;
+            position: relative;
+            text-shadow: 0 0 30px rgba(104, 109, 224, 0.5);
+            background: linear-gradient(to right, #4e9aff, #d659ff, #ffcc29);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .plus {
+            position: relative;
+            background: linear-gradient(135deg, #EB5E28 0%, #FF8A65 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 3rem;
+            top: -5px;
+        }
+        
+        .tagline {
+            font-weight: 300;
+            font-size: 0.9rem;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+        
+        .btn {
+            background: none;
+            border: 2px solid #fff;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: #fff;
+            z-index: -1;
+            transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .btn:hover {
+            color: #000;
+        }
+        
+        .btn:hover:before {
+            width: 100%;
+        }
+        
+        .interaction-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.1rem;
+            font-weight: 300;
+            opacity: 0.7;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+        }
+        
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 4rem;
+            }
+            
+            .plus {
+                font-size: 4.5rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .interaction-hint {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fluid-canvas"></canvas>
+    
+    <div class="content">
+        <h1 class="logo">Summarizer<span class="plus">+</span></h1>
+        <p class="tagline">Transform complexity into clarity</p>
+        <button class="btn" id="start-btn" onclick="opn()">Get Started</button>
+    </div>
+    
+    <div class="interaction-hint">Click and drag anywhere to interact with the fluid</div>
+
+    <script>
+        let btn=document.querySelector(".btn")
+        function opn(){
+        window.location.href = "http://127.0.0.1:5500/templates/register.html";
+        }
+        // Fluid simulation canvas
+        const canvas = document.getElementById('fluid-canvas');
+        const ctx = canvas.getContext('2d');
+        const hint = document.querySelector('.interaction-hint');
+        
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Fluid simulation parameters
+        const FLUID_SIZE = 128;
+        const SCALE = Math.max(canvas.width, canvas.height) / FLUID_SIZE;
+        const ITERATIONS = 4;
+        const VISCOSITY = 0.6;
+        const DIFFUSION = 0.8;
+        const MOUSE_FORCE = 5000;
+        const PALETTE = [
+            {r: 65, g: 88, b: 208},  // Blue
+            {r: 0, g: 176, b: 255},  // Light Blue
+            {r: 25, g: 118, b: 210}, // Medium Blue
+            {r: 48, g: 63, b: 159}   // Deep Blue
+        ];
+        
+        // Fluid simulation variables
+        let density, velocity_x, velocity_y;
+        let prev_density, prev_velocity_x, prev_velocity_y;
+        
+        // Mouse tracking
+        let mouse = { x: 0, y: 0, px: 0, py: 0, pressed: false };
+        let idleTimer = null;
+        
+        // Initialize arrays
+        function create_array(size) {
+            return new Array(size * size).fill(0);
+        }
+        
+        function initialize() {
+            density = create_array(FLUID_SIZE);
+            velocity_x = create_array(FLUID_SIZE);
+            velocity_y = create_array(FLUID_SIZE);
+            prev_density = create_array(FLUID_SIZE);
+            prev_velocity_x = create_array(FLUID_SIZE);
+            prev_velocity_y = create_array(FLUID_SIZE);
+        }
+        
+        // Index helper
+        function IX(x, y) {
+            x = Math.min(Math.max(1, x), FLUID_SIZE - 2);
+            y = Math.min(Math.max(1, y), FLUID_SIZE - 2);
+            return x + y * FLUID_SIZE;
+        }
+        
+        // Diffuse values
+        function diffuse(prev, curr, diff, dt) {
+            const a = dt * diff * (FLUID_SIZE - 2) * (FLUID_SIZE - 2);
+            
+            for (let k = 0; k < ITERATIONS; k++) {
+                for (let j = 1; j < FLUID_SIZE - 1; j++) {
+                    for (let i = 1; i < FLUID_SIZE - 1; i++) {
+                        const idx = IX(i, j);
+                        curr[idx] = (prev[idx] + a * (
+                            curr[IX(i+1, j)] +
+                            curr[IX(i-1, j)] +
+                            curr[IX(i, j+1)] +
+                            curr[IX(i, j-1)]
+                        )) / (1 + 4 * a);
+                    }
+                }
+            }
+        }
+        
+        // Project velocity field
+        function project(vx, vy, p, div) {
+            // Calculate divergence
+            for (let j = 1; j < FLUID_SIZE - 1; j++) {
+                for (let i = 1; i < FLUID_SIZE - 1; i++) {
+                    const idx = IX(i, j);
+                    div[idx] = -0.5 * (
+                        vx[IX(i+1, j)] - vx[IX(i-1, j)] +
+                        vy[IX(i, j+1)] - vy[IX(i, j-1)]
+                    ) / FLUID_SIZE;
+                    p[idx] = 0;
+                }
+            }
+            
+            // Solve pressure
+            for (let k = 0; k < ITERATIONS; k++) {
+                for (let j = 1; j < FLUID_SIZE - 1; j++) {
+                    for (let i = 1; i < FLUID_SIZE - 1; i++) {
+                        const idx = IX(i, j);
+                        p[idx] = (div[idx] + p[IX(i+1, j)] + p[IX(i-1, j)] + p[IX(i, j+1)] + p[IX(i, j-1)]) / 4;
+                    }
+                }
+            }
+            
+            // Apply pressure gradient
+            for (let j = 1; j < FLUID_SIZE - 1; j++) {
+                for (let i = 1; i < FLUID_SIZE - 1; i++) {
+                    const idx = IX(i, j);
+                    vx[idx] -= 0.5 * (p[IX(i+1, j)] - p[IX(i-1, j)]) * FLUID_SIZE;
+                    vy[idx] -= 0.5 * (p[IX(i, j+1)] - p[IX(i, j-1)]) * FLUID_SIZE;
+                }
+            }
+        }
+        
+        // Advection - move values through velocity field
+        function advect(prev, curr, vx, vy, dt) {
+            for (let j = 1; j < FLUID_SIZE - 1; j++) {
+                for (let i = 1; i < FLUID_SIZE - 1; i++) {
+                    const idx = IX(i, j);
+                    
+                    // Follow velocity backwards
+                    let x = i - dt * vx[idx] * FLUID_SIZE;
+                    let y = j - dt * vy[idx] * FLUID_SIZE;
+                    
+                    // Ensure valid bounds
+                    x = Math.min(Math.max(0.5, x), FLUID_SIZE - 1.5);
+                    y = Math.min(Math.max(0.5, y), FLUID_SIZE - 1.5);
+                    
+                    // Get interpolation indices
+                    const i0 = Math.floor(x);
+                    const i1 = i0 + 1;
+                    const j0 = Math.floor(y);
+                    const j1 = j0 + 1;
+                    
+                    // Calculate interpolation weights
+                    const s1 = x - i0;
+                    const s0 = 1 - s1;
+                    const t1 = y - j0;
+                    const t0 = 1 - t1;
+                    
+                    // Bilinear interpolation
+                    curr[idx] = 
+                        s0 * (t0 * prev[IX(i0, j0)] + t1 * prev[IX(i0, j1)]) +
+                        s1 * (t0 * prev[IX(i1, j0)] + t1 * prev[IX(i1, j1)]);
+                }
+            }
+        }
+        
+        // Main fluid step
+        function fluid_step(dt) {
+            // Add forces based on mouse movement
+            if (mouse.pressed) {
+                const dx = mouse.x - mouse.px;
+                const dy = mouse.y - mouse.py;
+                
+                const mx = Math.floor(mouse.x / SCALE);
+                const my = Math.floor(mouse.y / SCALE);
+                
+                // Add velocity from mouse
+                const idx = IX(mx, my);
+                velocity_x[idx] += dx * MOUSE_FORCE * dt;
+                velocity_y[idx] += dy * MOUSE_FORCE * dt;
+                
+                // Add color density at mouse position with a larger radius
+                for (let j = -2; j <= 2; j++) {
+                    for (let i = -2; i <= 2; i++) {
+                        const dist = Math.sqrt(i*i + j*j);
+                        if (dist <= 2) {
+                            const density_idx = IX(mx + i, my + j);
+                            density[density_idx] += (2 - dist) * 2;
+                        }
+                    }
+                }
+                
+                // Hide the hint when user interacts
+                hint.style.opacity = '0';
+            }
+            
+            // Velocity step
+            diffuse(prev_velocity_x, velocity_x, VISCOSITY, dt);
+            diffuse(prev_velocity_y, velocity_y, VISCOSITY, dt);
+            
+            project(velocity_x, velocity_y, prev_velocity_x, prev_velocity_y);
+            
+            let temp;
+            temp = prev_velocity_x; prev_velocity_x = velocity_x; velocity_x = temp;
+            temp = prev_velocity_y; prev_velocity_y = velocity_y; velocity_y = temp;
+            
+            advect(prev_velocity_x, velocity_x, prev_velocity_x, prev_velocity_y, dt);
+            advect(prev_velocity_y, velocity_y, prev_velocity_x, prev_velocity_y, dt);
+            
+            project(velocity_x, velocity_y, prev_velocity_x, prev_velocity_y);
+            
+            // Density step
+            diffuse(prev_density, density, DIFFUSION, dt);
+            
+            temp = prev_density; prev_density = density; density = temp;
+            
+            advect(prev_density, density, velocity_x, velocity_y, dt);
+            
+            // Dissipation
+            for (let i = 0; i < density.length; i++) {
+                density[i] *= 0.995; // Slower dissipation for longer-lasting effects
+            }
+        }
+        
+        // Render fluid
+        function render() {
+            const imgData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imgData.data;
+            
+            // First clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const idx = (x + y * canvas.width) * 4;
+                    
+                    // Sample fluid
+                    const fx = Math.floor(x / SCALE);
+                    const fy = Math.floor(y / SCALE);
+                    const fidx = IX(fx, fy);
+                    
+                    // Get density value
+                    const d = Math.min(1, Math.max(0, density[fidx]));
+                    if (d > 0.01) {
+                        // Choose color from palette based on position and velocity
+                        const vx = velocity_x[fidx];
+                        const vy = velocity_y[fidx];
+                        const vel = Math.sqrt(vx*vx + vy*vy);
+                        const colorIdx = Math.floor((vel * 2 + fx / FLUID_SIZE * 2) % PALETTE.length);
+                        const color = PALETTE[colorIdx];
+                        
+                        // Add glow effect
+                        const glow = Math.min(1, d * 1.5);
+                        
+                        // Apply color with density
+                        data[idx] = color.r;
+                        data[idx+1] = color.g;
+                        data[idx+2] = color.b;
+                        data[idx+3] = Math.floor(d * 255);
+                    } else {
+                        // Background
+                        data[idx+3] = 0;
+                    }
+                }
+            }
+            
+            ctx.putImageData(imgData, 0, 0);
+            
+            // Add a subtle glow to the entire canvas
+            ctx.fillStyle = 'rgba(0, 20, 80, 0.01)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Animation loop
+        let lastTime = 0;
+        function animate(time) {
+            const dt = Math.min((time - lastTime) / 1000, 0.016);
+            lastTime = time;
+            
+            fluid_step(dt);
+            render();
+            
+            // Update previous mouse position
+            mouse.px = mouse.x;
+            mouse.py = mouse.y;
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Add automatic fluid movement when idle
+        function addIdleMovement() {
+            if (!mouse.pressed) {
+                const x = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
+                const y = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
+                const idx = IX(x, y);
+                
+                density[idx] = 0.8;
+                
+                const angle = Math.random() * Math.PI * 2;
+                velocity_x[idx] = Math.cos(angle) * 30;
+                velocity_y[idx] = Math.sin(angle) * 30;
+                
+                // Show the hint after a period of no interaction
+                hint.style.opacity = '0.7';
+            }
+        }
+        
+        // Set up periodic idle movement
+        setInterval(addIdleMovement, 3000);
+        
+        // Mouse events
+        canvas.addEventListener('mousemove', function(e) {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            
+            // Initialize previous position if not set
+            if (mouse.px === 0 && mouse.py === 0) {
+                mouse.px = mouse.x;
+                mouse.py = mouse.y;
+            }
+            
+            // Reset idle timer
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                hint.style.opacity = '0.7';
+            }, 5000);
+        });
+        
+        canvas.addEventListener('mousedown', function() {
+            mouse.pressed = true;
+            hint.style.opacity = '0';
+        });
+        
+        canvas.addEventListener('mouseup', function() {
+            mouse.pressed = false;
+        });
+        
+        // Touch events for mobile
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            mouse.pressed = true;
+            hint.style.opacity = '0';
+            
+            // Reset idle timer
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                hint.style.opacity = '0.7';
+            }, 5000);
+        });
+        
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            mouse.px = mouse.x;
+            mouse.py = mouse.y;
+            mouse.pressed = true;
+            hint.style.opacity = '0';
+        });
+        
+        canvas.addEventListener('touchend', function() {
+            mouse.pressed = false;
+        });
+        
+        // Add some initial densities to make it look good on load
+        function addInitialDensity() {
+            for (let i = 0; i < 8; i++) {
+                const x = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
+                const y = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
+                const idx = IX(x, y);
+                
+                density[idx] = 1;
+                
+                // Add some initial velocity too
+                const angle = Math.random() * Math.PI * 2;
+                velocity_x[idx] = Math.cos(angle) * 80;
+                velocity_y[idx] = Math.sin(angle) * 80;
+            }
+        }
+        
+        // Resize handler
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Button click handler
+      
+        // Initialize and start animation
+        initialize();
+        addInitialDensity();
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
