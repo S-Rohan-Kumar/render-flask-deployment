@@ -1,5 +1,5 @@
 # Use Python 3.10 for compatibility with numpy==2.2.4 and pydantic==2.11.3
-FROM python:3.10
+FROM python:3.11
 
 # Install system dependencies for mysqlclient, cryptography, pillow, pytesseract, moviepy, etc.
 RUN apt-get update && apt-get install -y \
