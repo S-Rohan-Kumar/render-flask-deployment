@@ -47,6 +47,54 @@ mysql = MySQL(app)
 # API keys from environment variables
 GROQ_API_KEY = os.getenv('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')
 
+# With this:
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+# 2. Improve the temp directory handling:
+TEMP_DIR = os.path.join(os.getenv('RENDER_DISK_PATH', os.getcwd()), 'temp')
+os.makedirs(TEMP_DIR, exist_ok=True)
+os.chmod(TEMP_DIR, 0o777)  # Ensure write permissions
+
+# 3. Add diagnostic endpoints to help troubleshoot:
+@app.route('/system-check')
+def system_check():
+    """Check system dependencies"""
+    results = {}
+    
+    # Check Tesseract
+    try:
+        results["tesseract"] = {
+            "path": TESSERACT_PATH,
+            "exists": os.path.exists(TESSERACT_PATH),
+            "version": subprocess.check_output([TESSERACT_PATH, '--version'], stderr=subprocess.STDOUT).decode().strip()
+        }
+    except Exception as e:
+        results["tesseract"] = {"error": str(e)}
+    
+    # Check FFmpeg
+    try:
+        results["ffmpeg"] = {
+            "version": subprocess.check_output(['ffmpeg', '-version'], stderr=subprocess.STDOUT).decode().split('\n')[0]
+        }
+    except Exception as e:
+        results["ffmpeg"] = {"error": str(e)}
+    
+    # Check temp directory
+    results["temp_dir"] = {
+        "path": TEMP_DIR,
+        "exists": os.path.exists(TEMP_DIR),
+        "writable": os.access(TEMP_DIR, os.W_OK),
+        "disk_free": shutil.disk_usage(TEMP_DIR).free
+    }
+    
+    # Check API key
+    results["groq_api"] = {
+        "key_set": bool(GROQ_API_KEY)
+    }
+    
+    return jsonify(results)
+
+
 # Configure Tesseract path
 try:
     TESSERACT_PATH = subprocess.check_output(['which', 'tesseract']).decode().strip()
