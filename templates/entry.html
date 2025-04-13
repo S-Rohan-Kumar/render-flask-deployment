@@ -1,444 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summarizer+ | Transform complexity into clarity</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #6366F1;
-            --secondary: #EC4899;
-            --accent: #8B5CF6;
-            --dark: #111111;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--dark);
-            color: white;
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        
-        .content {
-            position: relative;
-            z-index: 2;
-            height: 100vh;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        
-        .logo {
-            font-size: 4rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: shimmer 4s infinite linear;
-            background-size: 200% 100%;
-        }
-        
-        @keyframes shimmer {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
-        }
-        
-        .tagline {
-            font-size: 1.2rem;
-            color: #e0e0e0;
-            margin-bottom: 2.5rem;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeIn 1s ease forwards 0.5s;
-        }
-        
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .get-started {
-            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
-            color: white;
-            border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-            position: relative;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeIn 1s ease forwards 1s;
-        }
-        
-        .get-started:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
-        }
-        
-        .instruction {
-            position: absolute;
-            bottom: 2rem;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.9rem;
-            opacity: 0;
-            animation: pulse 3s infinite, fadeIn 1s ease forwards 1.5s;
-        }
-        
-        @keyframes pulse {
-            0% {
-                opacity: 0.6;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0.6;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summarizer+</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    body {
+      background-color: #000;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    
+    .content {
+      z-index: 2;
+      text-align: center;
+      position: relative;
+    }
+    
+    .logo {
+      font-size: 3.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      background: linear-gradient(90deg, #4169E1, #FF69B4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+    }
+    
+    .logo::after {
+      content: "+";
+      position: absolute;
+      background: linear-gradient(90deg, #FF69B4, #FFD700);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .tagline {
+      font-size: 1.2rem;
+      margin-bottom: 3rem;
+      color: #ccc;
+    }
+    
+    .btn {
+      background-color: transparent;
+      color: white;
+      border: 2px solid white;
+      padding: 12px 32px;
+      font-size: 1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      font-weight: 600;
+    }
+    
+    .btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      z-index: 2;
+    }
+  </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
+  <canvas id="canvas"></canvas>
+  
+  <div class="content">
+    <h1 class="logo">Summarizer<span class="plus">+</span></h1>
+    <p class="tagline">Transform complexity into clarity</p>
+    <a href="#" class="btn" onclick="abc()">Get Started</a>
+  </div>
+  
+  <div class="footer">
+    Click and drag anywhere to interact with the fluid
+  </div>
+
+  <script>
+    // Interactive fluid canvas
+    let btn=document.querySelector(".btn")
+    function abc(){
+        window.location.href="/register"
+    }
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
     
-    <div class="content">
-        <h1 class="logo">Summarizer<sup>+</sup></h1>
-        <p class="tagline">Transform complexity into clarity</p>
-        <button class="get-started" id="getStarted" onclick="ab()">Get Started</button>
-    </div>
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
     
-    <p class="instruction">Move your cursor to navigate the stars</p>
-    
-    <script>
+    // Particle class for fluid simulation
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = Math.random() * 2 - 1;
+        this.vy = Math.random() * 2 - 1;
+        this.radius = Math.random() * 5 + 2;
+        this.color = this.getRandomColor();
+        this.alpha = Math.random() * 0.6 + 0.1;
+      }
+      
+      getRandomColor() {
+        const colors = [
+          '64, 105, 225',  // Royal Blue
+          '147, 112, 219', // Medium Purple
+          '255, 105, 180', // Hot Pink
+          '75, 0, 130',    // Indigo
+          '138, 43, 226'   // Blue Violet
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+      
+      update(mouseX, mouseY, isMouseDown) {
+        // Basic motion
+        this.x += this.vx;
+        this.y += this.vy;
         
-        document.addEventListener('DOMContentLoaded', function() {
-            // Canvas setup
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
+        // Bounce off edges
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+        
+        // Mouse interaction
+        if (mouseX && mouseY) {
+          const dx = mouseX - this.x;
+          const dy = mouseY - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 150) {
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+            const force = (150 - distance) / 150;
             
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            // Button redirect
-            document.getElementById('getStarted').addEventListener('click', function() {
-                window.location.href = '/register';
-            });
-            
-            // Stars settings
-            const stars = [];
-            const starColors = ['#6366F1', '#8B5CF6', '#EC4899', '#ffffff'];
-            const starCount = Math.min(window.innerWidth * 0.07, 300); // Responsive star count
-            
-            // Mouse position
-            const mouse = {
-                x: canvas.width / 2,
-                y: canvas.height / 2,
-                active: false
-            };
-            
-            // Background gradient
-            function createBackgroundGradient() {
-                const gradient = ctx.createRadialGradient(
-                    canvas.width / 2,
-                    canvas.height / 2,
-                    0,
-                    canvas.width / 2,
-                    canvas.height / 2,
-                    canvas.width * 0.8
-                );
-                
-                gradient.addColorStop(0, 'rgba(30, 20, 60, 0.2)');
-                gradient.addColorStop(1, 'rgba(10, 10, 15, 0)');
-                return gradient;
+            if (isMouseDown) {
+              // Pull particles toward mouse when dragging
+              this.vx += forceDirectionX * force * 0.6;
+              this.vy += forceDirectionY * force * 0.6;
+            } else {
+              // Push particles away from mouse when moving
+              this.vx -= forceDirectionX * force * 0.3;
+              this.vy -= forceDirectionY * force * 0.3;
             }
-            
-            // Star object
-            class Star {
-                constructor() {
-                    this.reset();
-                }
-                
-                reset() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height;
-                    this.z = Math.random() * 1500 + 500; // Distance from viewer (depth)
-                    this.color = starColors[Math.floor(Math.random() * starColors.length)];
-                    this.opacity = Math.random() * 0.5 + 0.5;
-                    this.size = Math.random() * 2 + 0.5;
-                    
-                    // Original coordinates (for reference)
-                    this.originX = this.x;
-                    this.originY = this.y;
-                    
-                    // Trail
-                    this.trail = [];
-                    this.trailLength = Math.floor(Math.random() * 5) + 3;
-                    
-                    // Blinking effect
-                    this.blinkSpeed = Math.random() * 0.01;
-                    this.blinkDirection = Math.random() > 0.5 ? 1 : -1;
-                }
-                
-                draw() {
-                    // Calculate perspective
-                    const scale = 1500 / this.z;
-                    const x = this.x * scale + canvas.width / 2 * (1 - scale);
-                    const y = this.y * scale + canvas.height / 2 * (1 - scale);
-                    
-                    // Calculate size based on depth
-                    const size = this.size * scale;
-                    
-                    // Draw trail
-                    if (this.trail.length > 0 && mouse.active) {
-                        ctx.beginPath();
-                        ctx.moveTo(x, y);
-                        
-                        for (let i = 0; i < this.trail.length; i++) {
-                            const point = this.trail[i];
-                            const trailScale = 1500 / point.z;
-                            const trailX = point.x * trailScale + canvas.width / 2 * (1 - trailScale);
-                            const trailY = point.y * trailScale + canvas.height / 2 * (1 - trailScale);
-                            
-                            const alpha = (i / this.trail.length) * 0.5;
-                            ctx.lineTo(trailX, trailY);
-                            
-                            if (i === this.trail.length - 1) {
-                                ctx.strokeStyle = this.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
-                                ctx.lineWidth = size * 0.5;
-                                ctx.stroke();
-                            }
-                        }
-                    }
-                    
-                    // Draw star
-                    ctx.beginPath();
-                    ctx.arc(x, y, size, 0, Math.PI * 2);
-                    
-                    const finalColor = this.color.replace(')', `, ${this.opacity})`).replace('rgb', 'rgba');
-                    ctx.fillStyle = finalColor;
-                    ctx.fill();
-                    
-                    // Glow effect for closer stars
-                    if (this.z < 1000) {
-                        ctx.beginPath();
-                        ctx.arc(x, y, size * 2, 0, Math.PI * 2);
-                        ctx.fillStyle = this.color.replace(')', ', 0.1)').replace('rgb', 'rgba');
-                        ctx.fill();
-                    }
-                }
-                
-                update() {
-                    // Move star towards viewer
-                    this.z -= 1.5; // Speed
-                    
-                    // Reset star if it's too close
-                    if (this.z < 100 || 
-                        this.x < -canvas.width || this.x > canvas.width * 2 || 
-                        this.y < -canvas.height || this.y > canvas.height * 2) {
-                        this.reset();
-                    }
-                    
-                    // Mouse influence on star movement (when active)
-                    if (mouse.active) {
-                        // Calculate mouse influence based on star depth
-                        const scale = 1500 / this.z;
-                        const centerX = canvas.width / 2;
-                        const centerY = canvas.height / 2;
-                        
-                        const moveX = (mouse.x - centerX) * 0.01;
-                        const moveY = (mouse.y - centerY) * 0.01;
-                        
-                        this.x += moveX;
-                        this.y += moveY;
-                        
-                        // Add current position to trail
-                        if (this.trail.length >= this.trailLength) {
-                            this.trail.pop();
-                        }
-                        
-                        this.trail.unshift({
-                            x: this.x,
-                            y: this.y,
-                            z: this.z + 50
-                        });
-                    }
-                    
-                    // Subtle random movement
-                    this.x += (Math.random() - 0.5) * 0.3;
-                    this.y += (Math.random() - 0.5) * 0.3;
-                    
-                    // Blinking effect
-                    this.opacity += this.blinkSpeed * this.blinkDirection;
-                    if (this.opacity >= 1) {
-                        this.opacity = 1;
-                        this.blinkDirection = -1;
-                    } else if (this.opacity <= 0.5) {
-                        this.opacity = 0.5;
-                        this.blinkDirection = 1;
-                    }
-                }
-            }
-            
-            // Create stars
-            function createStars() {
-                stars.length = 0;
-                for (let i = 0; i < starCount; i++) {
-                    stars.push(new Star());
-                }
-            }
-            
-            // Handle resize
-            window.addEventListener('resize', function() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                createStars();
-            });
-            
-            // Mouse interactions
-            window.addEventListener('mousemove', function(e) {
-                mouse.x = e.clientX;
-                mouse.y = e.clientY;
-                mouse.active = true;
-            });
-            
-            window.addEventListener('mouseout', function() {
-                mouse.active = false;
-            });
-            
-            // Touch support
-            window.addEventListener('touchmove', function(e) {
-                if (e.touches.length > 0) {
-                    mouse.x = e.touches[0].clientX;
-                    mouse.y = e.touches[0].clientY;
-                    mouse.active = true;
-                }
-                e.preventDefault();
-            }, { passive: false });
-            
-            window.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    mouse.active = false;
-                }, 3000);
-            });
-            
-            // Animation loop
-            function animate() {
-                ctx.fillStyle = 'rgba(17, 17, 17, 0.2)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw background gradient
-                ctx.fillStyle = createBackgroundGradient();
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Update and draw stars
-                for (let i = 0; i < stars.length; i++) {
-                    stars[i].update();
-                    stars[i].draw();
-                }
-                
-                // Create occasional shooting star
-                if (Math.random() < 0.01) {
-                    createShootingStar();
-                }
-                
-                requestAnimationFrame(animate);
-            }
-            
-            // Shooting star effect
-            function createShootingStar() {
-                const shootingStar = {
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height / 2,
-                    length: Math.random() * 150 + 50,
-                    speed: Math.random() * 10 + 10,
-                    angle: Math.PI * (Math.random() * 0.2 + 0.1),
-                    life: 0,
-                    maxLife: 50
-                };
-                
-                const shootingStarAnimation = setInterval(() => {
-                    ctx.beginPath();
-                    ctx.moveTo(shootingStar.x, shootingStar.y);
-                    
-                    // Calculate end point
-                    const endX = shootingStar.x + Math.cos(shootingStar.angle) * shootingStar.length;
-                    const endY = shootingStar.y + Math.sin(shootingStar.angle) * shootingStar.length;
-                    
-                    ctx.lineTo(endX, endY);
-                    
-                    // Create gradient
-                    const gradient = ctx.createLinearGradient(
-                        shootingStar.x, shootingStar.y, 
-                        endX, endY
-                    );
-                    
-                    const progress = shootingStar.life / shootingStar.maxLife;
-                    const alpha = 1 - progress;
-                    
-                    gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
-                    gradient.addColorStop(0.3, `rgba(152, 128, 255, ${alpha * 0.8})`);
-                    gradient.addColorStop(1, 'rgba(100, 100, 200, 0)');
-                    
-                    ctx.strokeStyle = gradient;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    
-                    // Move shooting star
-                    shootingStar.x += Math.cos(shootingStar.angle) * shootingStar.speed;
-                    shootingStar.y += Math.sin(shootingStar.angle) * shootingStar.speed;
-                    
-                    // Update life
-                    shootingStar.life++;
-                    
-                    if (shootingStar.life >= shootingStar.maxLife ||
-                        shootingStar.x < 0 || shootingStar.x > canvas.width ||
-                        shootingStar.y < 0 || shootingStar.y > canvas.height) {
-                        clearInterval(shootingStarAnimation);
-                    }
-                }, 20);
-            }
-            
-            // Initialize
-            createStars();
-            animate();
-        });
-    </script>
+          }
+        }
+        
+        // Add some damping
+        this.vx *= 0.99;
+        this.vy *= 0.99;
+        
+        // Speed limit
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (speed > 2) {
+          this.vx = (this.vx / speed) * 2;
+          this.vy = (this.vy / speed) * 2;
+        }
+      }
+      
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
+        ctx.fill();
+      }
+    }
+    
+    // Create particles
+    const particleCount = 150;
+    const particles = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+    
+    // Mouse tracking
+    let mouseX = null;
+    let mouseY = null;
+    let isMouseDown = false;
+    
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+    
+    window.addEventListener('mousedown', () => {
+      isMouseDown = true;
+    });
+    
+    window.addEventListener('mouseup', () => {
+      isMouseDown = false;
+    });
+    
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+    
+    // Animation loop
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      
+      // Update and draw particles
+      particles.forEach(particle => {
+        particle.update(mouseX, mouseY, isMouseDown);
+        particle.draw(ctx);
+      });
+      
+      // Draw connections between nearby particles
+      particles.forEach((p1, i) => {
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(${p1.color}, ${0.2 * (1 - distance / 100)})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+      });
+      
+      requestAnimationFrame(animate);
+    }
+    
+    animate();
+  </script>
 </body>
 </html>
