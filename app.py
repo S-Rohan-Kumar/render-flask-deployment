@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
+from flask_mysqldb import MySQL
 from PIL import Image
 import pytesseract
 from groq import Groq
@@ -11,8 +12,6 @@ import tempfile
 import yt_dlp
 import tempfile
 from pydub.utils import make_chunks
-import psycopg2
-from psycopg2 import pool
 from werkzeug.utils import secure_filename
 import pdfplumber
 import bcrypt
@@ -37,28 +36,13 @@ app = Flask(__name__)
 CORS(app, supports_credentials=True)
 app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key_for_dev')
 
-# Database configuration from environment variables
-DB_URL = os.getenv('postgresql://localhost:OAMTfxntkUUfrGsyh2wNpW9uLfCbPVnn@dpg-cvt87p95pdvs739htdc0-a/login_7l6t')
-
-# Create a connection pool
-try:
-    connection_pool = pool.SimpleConnectionPool(
-        1, 20, DB_URL
-    )
-    logger.info("PostgreSQL connection pool created successfully")
-    
-    # Test the connection
-    conn = connection_pool.getconn()
-    cursor = conn.cursor()
-    cursor.execute("SELECT version();")
-    version = cursor.fetchone()
-    logger.info(f"PostgreSQL version: {version}")
-    cursor.close()
-    connection_pool.putconn(conn)
-    
-except Exception as e:
-    logger.error(f"Error connecting to PostgreSQL: {str(e)}")
-    connection_pool = None
+# Database configuration from the email screenshot
+app.config['MYSQL_HOST'] = 'sql12.freesqldatabase.com'
+app.config['MYSQL_USER'] = 'sql12772852'
+app.config['MYSQL_PASSWORD'] = 'sC1eaZC7nf'
+app.config['MYSQL_DB'] = 'sql12772852'
+app.config['MYSQL_PORT'] = 3306
+mysql = MySQL(app)
 
 # API keys from environment variables
 GROQ_API_KEY = os.getenv('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')
@@ -94,20 +78,9 @@ if not os.path.exists(TEMPLATE_DIR):
 if not os.path.exists(STATIC_DIR):
     os.makedirs(STATIC_DIR)
 
-# Function to get database connection from the pool
+# Function to get database connection
 def get_db_connection():
-    if connection_pool:
-        return connection_pool.getconn()
-    else:
-        # Fallback direct connection if pool fails
-        return psycopg2.connect(DB_URL)
-
-# Function to return connection to the pool
-def return_db_connection(conn):
-    if connection_pool:
-        connection_pool.putconn(conn)
-    else:
-        conn.close()
+    return mysql.connection
 
 # Implementation of extract_text function that was imported from langi
 def extract_text(image_file):
@@ -128,8 +101,6 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Handle user login"""
-    conn = None
-    cursor = None
     if request.method == 'GET':
         return render_template("login.html")
     
@@ -150,11 +121,12 @@ def login():
         if not is_valid_email(email):
             return jsonify({"success": False, "message": "Invalid email format"}), 400
         
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        # Using MySQL connection
+        cursor = mysql.connection.cursor()
         query = "SELECT id, fstname, lstname, email, password FROM register WHERE email=%s"
         cursor.execute(query, (email,))
         user = cursor.fetchone()
+        cursor.close()
         
         if not user:
             logger.warning(f"No user found with email: {email}")
@@ -173,18 +145,10 @@ def login():
     except Exception as e:
         logger.error("Login error: %s", str(e))
         return jsonify({"success": False, "message": str(e)}), 500
-    
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            return_db_connection(conn)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Handle user registration"""
-    conn = None
-    cursor = None
     if request.method == 'GET':
         return render_template("register.html")
     try:
@@ -209,18 +173,20 @@ def register():
         if len(password) < 8:
             return jsonify({"success": False, "message": "Password must be at least 8 characters long"}), 400
             
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        # Using MySQL connection
+        cursor = mysql.connection.cursor()
         cursor.execute("SELECT id FROM register WHERE email=%s", (email,))
         if cursor.fetchone():
             logger.warning(f"Email already registered: {email}")
+            cursor.close()
             return jsonify({"success": False, "message": "Email already registered"}), 409
         
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        query = "INSERT INTO register (fstname, lstname, email, password) VALUES (%s, %s, %s, %s) RETURNING id"
+        query = "INSERT INTO register (fstname, lstname, email, password) VALUES (%s, %s, %s, %s)"
         cursor.execute(query, (fstname, lstname, email, hashed_password))
-        user_id = cursor.fetchone()[0]
-        conn.commit()
+        mysql.connection.commit()
+        user_id = cursor.lastrowid
+        cursor.close()
         logger.info(f"New user registered: {email}")
         
         return jsonify({"success": True, "message": "Registration successful", "user_id": user_id}), 201
@@ -228,12 +194,6 @@ def register():
     except Exception as e:
         logger.error("Registration error: %s", str(e))
         return jsonify({"success": False, "message": str(e)}), 500
-    
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            return_db_connection(conn)
 
 @app.route('/main', methods=['GET', 'POST'])
 def main():
@@ -588,26 +548,14 @@ def tesseract_check():
 @app.route('/db-check')
 def db_check():
     """Debug endpoint to check database connection"""
-    conn = None
-    cursor = None
-    result = {"connected": False}
-    
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT version();")
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT VERSION()")
         version = cursor.fetchone()
-        result["version"] = version[0]
-        result["connected"] = True
-        return jsonify(result)
+        cursor.close()
+        return jsonify({"connected": True, "version": version[0]})
     except Exception as e:
-        result["error"] = str(e)
-        return jsonify(result), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            return_db_connection(conn)
+        return jsonify({"connected": False, "error": str(e)}), 500
 
 # Create a simple health check endpoint for Render
 @app.route('/health', methods=['GET'])
@@ -617,16 +565,13 @@ def health_check():
 
 # Create database tables if they don't exist
 def init_db():
-    conn = None
-    cursor = None
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = mysql.connection.cursor()
         
         # Create register table if it doesn't exist
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS register (
-            id SERIAL PRIMARY KEY,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             fstname VARCHAR(100) NOT NULL,
             lstname VARCHAR(100) NOT NULL,
             email VARCHAR(100) UNIQUE NOT NULL,
@@ -635,21 +580,17 @@ def init_db():
         );
         """)
         
-        conn.commit()
+        mysql.connection.commit()
+        cursor.close()
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing database: {str(e)}")
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            return_db_connection(conn)
 
 # Initialize the database on startup
 if __name__ == '__main__':
-    init_db()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
 else:
-    # Initialize database when running in production
-    init_db()
+    # Initialize database when running in production (only if in a context where mysql is available)
+    with app.app_context():
+        init_db()
