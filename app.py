@@ -45,7 +45,7 @@ app.config['MYSQL_PORT'] = 3306
 mysql = MySQL(app)
 
 # API keys from environment variables
-GROQ_API_KEY = os.getenv('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')
+
 
 # With this:
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
