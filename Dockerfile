@@ -1,7 +1,7 @@
-# Use Python 3.10 to support numpy==2.2.4 and pydantic==2.11.3
-FROM python:3.11
+# Use Python 3.10 for compatibility with numpy==2.2.4 and pydantic==2.11.3
+FROM python:3.10
 
-# Install system dependencies with proper error handling
+# Install system dependencies for mysqlclient, cryptography, pillow, pytesseract, moviepy, etc.
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     libtesseract-dev \
@@ -17,18 +17,18 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     wget \
     curl \
-    libmysqlclient-dev \      # Added for mysqlclient==2.2.7
-    libssl-dev \              # Added for cryptography==44.0.2
-    libffi-dev \              # Added for cffi==1.17.1
-    libjpeg-dev \             # Added for pillow==10.4.0
-    zlib1g-dev \              # Added for pillow==10.4.0
+    libmysqlclient-dev \
+    libssl-dev \
+    libffi-dev \
+    libjpeg-dev \
+    zlib1g-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up working directory
+# Set working directory
 WORKDIR /app
 
-# Create and set permissions for temp directory
+# Create temp directory with permissions
 RUN mkdir -p /app/temp && chmod 777 /app/temp
 
 # Set environment variables
@@ -36,23 +36,23 @@ ENV PYTHONUNBUFFERED=1
 ENV TESSERACT_PATH=/usr/bin/tesseract
 ENV RENDER_DISK_PATH=/app
 ENV TEMP_DIR=/app/temp
-ENV PORT=10000  # Fallback for local testing; Render overrides this
+ENV PORT 10000
 
-# Upgrade pip to avoid version warnings
+# Upgrade pip to latest version
 RUN pip install --upgrade pip
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Verify installations
+# Verify Tesseract and FFmpeg installations
 RUN tesseract --version && ffmpeg -version
 
 # Copy application code
 COPY . .
 
-# Make sure templates and static directories exist
+# Ensure templates and static directories exist
 RUN mkdir -p templates static
 
-# Entry point command for Gunicorn
+# Run Gunicorn with dynamic port binding for Render
 CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--timeout", "120", "--workers", "3", "app:app"]
