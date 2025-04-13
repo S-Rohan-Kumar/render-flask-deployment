@@ -3,9 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summarizer+ | Smart Content Summarization</title>
+    <title>Summarizer+ | Transform complexity into clarity</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        :root {
+            --primary: #6366F1;
+            --secondary: #EC4899;
+            --accent: #8B5CF6;
+            --dark: #111111;
+        }
         
         * {
             margin: 0;
@@ -14,516 +21,424 @@
         }
         
         body {
-            font-family: 'Outfit', sans-serif;
-            overflow: hidden;
-            background: #000;
-            color: #fff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--dark);
+            color: white;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
+            position: relative;
         }
         
-        canvas {
+        #canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            cursor: pointer;
+            z-index: 1;
         }
         
         .content {
             position: relative;
-            z-index: 10;
+            z-index: 2;
+            height: 100vh;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            padding: 2rem;
+            align-items: center;
             text-align: center;
-            max-width: 800px;
         }
         
         .logo {
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: 800;
-            letter-spacing: -2px;
             margin-bottom: 1rem;
-            position: relative;
-            text-shadow: 0 0 30px rgba(104, 109, 224, 0.5);
-            background: linear-gradient(to right, #4e9aff, #d659ff, #ffcc29);
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            animation: shimmer 4s infinite linear;
+            background-size: 200% 100%;
         }
         
-        .plus {
-            position: relative;
-            background: linear-gradient(135deg, #EB5E28 0%, #FF8A65 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-size: 3rem;
-            top: -5px;
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
         
         .tagline {
-            font-weight: 300;
-            font-size: 0.9rem;
-            margin-bottom: 3rem;
-            opacity: 0.8;
+            font-size: 1.2rem;
+            color: #e0e0e0;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 1s ease forwards 0.5s;
         }
         
-        .btn {
-            background: none;
-            border: 2px solid #fff;
-            color: #fff;
-            font-size: 0.9rem;
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .get-started {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 2rem;
+            font-size: 1rem;
             font-weight: 600;
-            padding: 1rem 3rem;
-            border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
             position: relative;
             overflow: hidden;
-            z-index: 1;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 1s ease forwards 1s;
         }
         
-        .btn:before {
-            content: '';
+        .get-started:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
+        }
+        
+        .instruction {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 0%;
-            height: 100%;
-            background: #fff;
-            z-index: -1;
-            transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            bottom: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            opacity: 0;
+            animation: pulse 3s infinite, fadeIn 1s ease forwards 1.5s;
         }
         
-        .btn:hover {
-            color: #000;
-        }
-        
-        .btn:hover:before {
-            width: 100%;
-        }
-        
-        .interaction-hint {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 1.1rem;
-            font-weight: 300;
-            opacity: 0.7;
-            transition: opacity 0.5s ease;
-            z-index: 10;
-        }
-        
-        @media (max-width: 768px) {
-            .logo {
-                font-size: 4rem;
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
             }
-            
-            .plus {
-                font-size: 4.5rem;
+            50% {
+                opacity: 1;
             }
-            
-            .tagline {
-                font-size: 1.2rem;
-            }
-            
-            .interaction-hint {
-                font-size: 0.9rem;
+            100% {
+                opacity: 0.6;
             }
         }
     </style>
 </head>
 <body>
-    <canvas id="fluid-canvas"></canvas>
+    <canvas id="canvas"></canvas>
     
     <div class="content">
-        <h1 class="logo">Summarizer<span class="plus">+</span></h1>
+        <h1 class="logo">Summarizer<sup>+</sup></h1>
         <p class="tagline">Transform complexity into clarity</p>
-        <button class="btn" id="start-btn" onclick="opn()">Get Started</button>
+        <button class="get-started" id="getStarted" onclick="ab()">Get Started</button>
     </div>
     
-    <div class="interaction-hint">Click and drag anywhere to interact with the fluid</div>
-
+    <p class="instruction">Move your cursor to navigate the stars</p>
+    
     <script>
-        let btn=document.querySelector(".btn")
-        function opn(){
-        window.location.href = "/register";
-        }
-        // Fluid simulation canvas
-        const canvas = document.getElementById('fluid-canvas');
-        const ctx = canvas.getContext('2d');
-        const hint = document.querySelector('.interaction-hint');
         
-        // Set canvas size
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        // Fluid simulation parameters
-        const FLUID_SIZE = 128;
-        const SCALE = Math.max(canvas.width, canvas.height) / FLUID_SIZE;
-        const ITERATIONS = 4;
-        const VISCOSITY = 0.6;
-        const DIFFUSION = 0.8;
-        const MOUSE_FORCE = 5000;
-        const PALETTE = [
-            {r: 65, g: 88, b: 208},  // Blue
-            {r: 0, g: 176, b: 255},  // Light Blue
-            {r: 25, g: 118, b: 210}, // Medium Blue
-            {r: 48, g: 63, b: 159}   // Deep Blue
-        ];
-        
-        // Fluid simulation variables
-        let density, velocity_x, velocity_y;
-        let prev_density, prev_velocity_x, prev_velocity_y;
-        
-        // Mouse tracking
-        let mouse = { x: 0, y: 0, px: 0, py: 0, pressed: false };
-        let idleTimer = null;
-        
-        // Initialize arrays
-        function create_array(size) {
-            return new Array(size * size).fill(0);
-        }
-        
-        function initialize() {
-            density = create_array(FLUID_SIZE);
-            velocity_x = create_array(FLUID_SIZE);
-            velocity_y = create_array(FLUID_SIZE);
-            prev_density = create_array(FLUID_SIZE);
-            prev_velocity_x = create_array(FLUID_SIZE);
-            prev_velocity_y = create_array(FLUID_SIZE);
-        }
-        
-        // Index helper
-        function IX(x, y) {
-            x = Math.min(Math.max(1, x), FLUID_SIZE - 2);
-            y = Math.min(Math.max(1, y), FLUID_SIZE - 2);
-            return x + y * FLUID_SIZE;
-        }
-        
-        // Diffuse values
-        function diffuse(prev, curr, diff, dt) {
-            const a = dt * diff * (FLUID_SIZE - 2) * (FLUID_SIZE - 2);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Canvas setup
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
             
-            for (let k = 0; k < ITERATIONS; k++) {
-                for (let j = 1; j < FLUID_SIZE - 1; j++) {
-                    for (let i = 1; i < FLUID_SIZE - 1; i++) {
-                        const idx = IX(i, j);
-                        curr[idx] = (prev[idx] + a * (
-                            curr[IX(i+1, j)] +
-                            curr[IX(i-1, j)] +
-                            curr[IX(i, j+1)] +
-                            curr[IX(i, j-1)]
-                        )) / (1 + 4 * a);
-                    }
-                }
-            }
-        }
-        
-        // Project velocity field
-        function project(vx, vy, p, div) {
-            // Calculate divergence
-            for (let j = 1; j < FLUID_SIZE - 1; j++) {
-                for (let i = 1; i < FLUID_SIZE - 1; i++) {
-                    const idx = IX(i, j);
-                    div[idx] = -0.5 * (
-                        vx[IX(i+1, j)] - vx[IX(i-1, j)] +
-                        vy[IX(i, j+1)] - vy[IX(i, j-1)]
-                    ) / FLUID_SIZE;
-                    p[idx] = 0;
-                }
-            }
-            
-            // Solve pressure
-            for (let k = 0; k < ITERATIONS; k++) {
-                for (let j = 1; j < FLUID_SIZE - 1; j++) {
-                    for (let i = 1; i < FLUID_SIZE - 1; i++) {
-                        const idx = IX(i, j);
-                        p[idx] = (div[idx] + p[IX(i+1, j)] + p[IX(i-1, j)] + p[IX(i, j+1)] + p[IX(i, j-1)]) / 4;
-                    }
-                }
-            }
-            
-            // Apply pressure gradient
-            for (let j = 1; j < FLUID_SIZE - 1; j++) {
-                for (let i = 1; i < FLUID_SIZE - 1; i++) {
-                    const idx = IX(i, j);
-                    vx[idx] -= 0.5 * (p[IX(i+1, j)] - p[IX(i-1, j)]) * FLUID_SIZE;
-                    vy[idx] -= 0.5 * (p[IX(i, j+1)] - p[IX(i, j-1)]) * FLUID_SIZE;
-                }
-            }
-        }
-        
-        // Advection - move values through velocity field
-        function advect(prev, curr, vx, vy, dt) {
-            for (let j = 1; j < FLUID_SIZE - 1; j++) {
-                for (let i = 1; i < FLUID_SIZE - 1; i++) {
-                    const idx = IX(i, j);
-                    
-                    // Follow velocity backwards
-                    let x = i - dt * vx[idx] * FLUID_SIZE;
-                    let y = j - dt * vy[idx] * FLUID_SIZE;
-                    
-                    // Ensure valid bounds
-                    x = Math.min(Math.max(0.5, x), FLUID_SIZE - 1.5);
-                    y = Math.min(Math.max(0.5, y), FLUID_SIZE - 1.5);
-                    
-                    // Get interpolation indices
-                    const i0 = Math.floor(x);
-                    const i1 = i0 + 1;
-                    const j0 = Math.floor(y);
-                    const j1 = j0 + 1;
-                    
-                    // Calculate interpolation weights
-                    const s1 = x - i0;
-                    const s0 = 1 - s1;
-                    const t1 = y - j0;
-                    const t0 = 1 - t1;
-                    
-                    // Bilinear interpolation
-                    curr[idx] = 
-                        s0 * (t0 * prev[IX(i0, j0)] + t1 * prev[IX(i0, j1)]) +
-                        s1 * (t0 * prev[IX(i1, j0)] + t1 * prev[IX(i1, j1)]);
-                }
-            }
-        }
-        
-        // Main fluid step
-        function fluid_step(dt) {
-            // Add forces based on mouse movement
-            if (mouse.pressed) {
-                const dx = mouse.x - mouse.px;
-                const dy = mouse.y - mouse.py;
-                
-                const mx = Math.floor(mouse.x / SCALE);
-                const my = Math.floor(mouse.y / SCALE);
-                
-                // Add velocity from mouse
-                const idx = IX(mx, my);
-                velocity_x[idx] += dx * MOUSE_FORCE * dt;
-                velocity_y[idx] += dy * MOUSE_FORCE * dt;
-                
-                // Add color density at mouse position with a larger radius
-                for (let j = -2; j <= 2; j++) {
-                    for (let i = -2; i <= 2; i++) {
-                        const dist = Math.sqrt(i*i + j*j);
-                        if (dist <= 2) {
-                            const density_idx = IX(mx + i, my + j);
-                            density[density_idx] += (2 - dist) * 2;
-                        }
-                    }
-                }
-                
-                // Hide the hint when user interacts
-                hint.style.opacity = '0';
-            }
-            
-            // Velocity step
-            diffuse(prev_velocity_x, velocity_x, VISCOSITY, dt);
-            diffuse(prev_velocity_y, velocity_y, VISCOSITY, dt);
-            
-            project(velocity_x, velocity_y, prev_velocity_x, prev_velocity_y);
-            
-            let temp;
-            temp = prev_velocity_x; prev_velocity_x = velocity_x; velocity_x = temp;
-            temp = prev_velocity_y; prev_velocity_y = velocity_y; velocity_y = temp;
-            
-            advect(prev_velocity_x, velocity_x, prev_velocity_x, prev_velocity_y, dt);
-            advect(prev_velocity_y, velocity_y, prev_velocity_x, prev_velocity_y, dt);
-            
-            project(velocity_x, velocity_y, prev_velocity_x, prev_velocity_y);
-            
-            // Density step
-            diffuse(prev_density, density, DIFFUSION, dt);
-            
-            temp = prev_density; prev_density = density; density = temp;
-            
-            advect(prev_density, density, velocity_x, velocity_y, dt);
-            
-            // Dissipation
-            for (let i = 0; i < density.length; i++) {
-                density[i] *= 0.995; // Slower dissipation for longer-lasting effects
-            }
-        }
-        
-        // Render fluid
-        function render() {
-            const imgData = ctx.createImageData(canvas.width, canvas.height);
-            const data = imgData.data;
-            
-            // First clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            for (let y = 0; y < canvas.height; y++) {
-                for (let x = 0; x < canvas.width; x++) {
-                    const idx = (x + y * canvas.width) * 4;
-                    
-                    // Sample fluid
-                    const fx = Math.floor(x / SCALE);
-                    const fy = Math.floor(y / SCALE);
-                    const fidx = IX(fx, fy);
-                    
-                    // Get density value
-                    const d = Math.min(1, Math.max(0, density[fidx]));
-                    if (d > 0.01) {
-                        // Choose color from palette based on position and velocity
-                        const vx = velocity_x[fidx];
-                        const vy = velocity_y[fidx];
-                        const vel = Math.sqrt(vx*vx + vy*vy);
-                        const colorIdx = Math.floor((vel * 2 + fx / FLUID_SIZE * 2) % PALETTE.length);
-                        const color = PALETTE[colorIdx];
-                        
-                        // Add glow effect
-                        const glow = Math.min(1, d * 1.5);
-                        
-                        // Apply color with density
-                        data[idx] = color.r;
-                        data[idx+1] = color.g;
-                        data[idx+2] = color.b;
-                        data[idx+3] = Math.floor(d * 255);
-                    } else {
-                        // Background
-                        data[idx+3] = 0;
-                    }
-                }
-            }
-            
-            ctx.putImageData(imgData, 0, 0);
-            
-            // Add a subtle glow to the entire canvas
-            ctx.fillStyle = 'rgba(0, 20, 80, 0.01)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-        
-        // Animation loop
-        let lastTime = 0;
-        function animate(time) {
-            const dt = Math.min((time - lastTime) / 1000, 0.016);
-            lastTime = time;
-            
-            fluid_step(dt);
-            render();
-            
-            // Update previous mouse position
-            mouse.px = mouse.x;
-            mouse.py = mouse.y;
-            
-            requestAnimationFrame(animate);
-        }
-        
-        // Add automatic fluid movement when idle
-        function addIdleMovement() {
-            if (!mouse.pressed) {
-                const x = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
-                const y = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
-                const idx = IX(x, y);
-                
-                density[idx] = 0.8;
-                
-                const angle = Math.random() * Math.PI * 2;
-                velocity_x[idx] = Math.cos(angle) * 30;
-                velocity_y[idx] = Math.sin(angle) * 30;
-                
-                // Show the hint after a period of no interaction
-                hint.style.opacity = '0.7';
-            }
-        }
-        
-        // Set up periodic idle movement
-        setInterval(addIdleMovement, 3000);
-        
-        // Mouse events
-        canvas.addEventListener('mousemove', function(e) {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-            
-            // Initialize previous position if not set
-            if (mouse.px === 0 && mouse.py === 0) {
-                mouse.px = mouse.x;
-                mouse.py = mouse.y;
-            }
-            
-            // Reset idle timer
-            clearTimeout(idleTimer);
-            idleTimer = setTimeout(() => {
-                hint.style.opacity = '0.7';
-            }, 5000);
-        });
-        
-        canvas.addEventListener('mousedown', function() {
-            mouse.pressed = true;
-            hint.style.opacity = '0';
-        });
-        
-        canvas.addEventListener('mouseup', function() {
-            mouse.pressed = false;
-        });
-        
-        // Touch events for mobile
-        canvas.addEventListener('touchmove', function(e) {
-            e.preventDefault();
-            mouse.x = e.touches[0].clientX;
-            mouse.y = e.touches[0].clientY;
-            mouse.pressed = true;
-            hint.style.opacity = '0';
-            
-            // Reset idle timer
-            clearTimeout(idleTimer);
-            idleTimer = setTimeout(() => {
-                hint.style.opacity = '0.7';
-            }, 5000);
-        });
-        
-        canvas.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            mouse.x = e.touches[0].clientX;
-            mouse.y = e.touches[0].clientY;
-            mouse.px = mouse.x;
-            mouse.py = mouse.y;
-            mouse.pressed = true;
-            hint.style.opacity = '0';
-        });
-        
-        canvas.addEventListener('touchend', function() {
-            mouse.pressed = false;
-        });
-        
-        // Add some initial densities to make it look good on load
-        function addInitialDensity() {
-            for (let i = 0; i < 8; i++) {
-                const x = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
-                const y = Math.floor(Math.random() * (FLUID_SIZE - 10)) + 5;
-                const idx = IX(x, y);
-                
-                density[idx] = 1;
-                
-                // Add some initial velocity too
-                const angle = Math.random() * Math.PI * 2;
-                velocity_x[idx] = Math.cos(angle) * 80;
-                velocity_y[idx] = Math.sin(angle) * 80;
-            }
-        }
-        
-        // Resize handler
-        window.addEventListener('resize', function() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            
+            // Button redirect
+            document.getElementById('getStarted').addEventListener('click', function() {
+                window.location.href = '/register';
+            });
+            
+            // Stars settings
+            const stars = [];
+            const starColors = ['#6366F1', '#8B5CF6', '#EC4899', '#ffffff'];
+            const starCount = Math.min(window.innerWidth * 0.07, 300); // Responsive star count
+            
+            // Mouse position
+            const mouse = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                active: false
+            };
+            
+            // Background gradient
+            function createBackgroundGradient() {
+                const gradient = ctx.createRadialGradient(
+                    canvas.width / 2,
+                    canvas.height / 2,
+                    0,
+                    canvas.width / 2,
+                    canvas.height / 2,
+                    canvas.width * 0.8
+                );
+                
+                gradient.addColorStop(0, 'rgba(30, 20, 60, 0.2)');
+                gradient.addColorStop(1, 'rgba(10, 10, 15, 0)');
+                return gradient;
+            }
+            
+            // Star object
+            class Star {
+                constructor() {
+                    this.reset();
+                }
+                
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.z = Math.random() * 1500 + 500; // Distance from viewer (depth)
+                    this.color = starColors[Math.floor(Math.random() * starColors.length)];
+                    this.opacity = Math.random() * 0.5 + 0.5;
+                    this.size = Math.random() * 2 + 0.5;
+                    
+                    // Original coordinates (for reference)
+                    this.originX = this.x;
+                    this.originY = this.y;
+                    
+                    // Trail
+                    this.trail = [];
+                    this.trailLength = Math.floor(Math.random() * 5) + 3;
+                    
+                    // Blinking effect
+                    this.blinkSpeed = Math.random() * 0.01;
+                    this.blinkDirection = Math.random() > 0.5 ? 1 : -1;
+                }
+                
+                draw() {
+                    // Calculate perspective
+                    const scale = 1500 / this.z;
+                    const x = this.x * scale + canvas.width / 2 * (1 - scale);
+                    const y = this.y * scale + canvas.height / 2 * (1 - scale);
+                    
+                    // Calculate size based on depth
+                    const size = this.size * scale;
+                    
+                    // Draw trail
+                    if (this.trail.length > 0 && mouse.active) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        
+                        for (let i = 0; i < this.trail.length; i++) {
+                            const point = this.trail[i];
+                            const trailScale = 1500 / point.z;
+                            const trailX = point.x * trailScale + canvas.width / 2 * (1 - trailScale);
+                            const trailY = point.y * trailScale + canvas.height / 2 * (1 - trailScale);
+                            
+                            const alpha = (i / this.trail.length) * 0.5;
+                            ctx.lineTo(trailX, trailY);
+                            
+                            if (i === this.trail.length - 1) {
+                                ctx.strokeStyle = this.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+                                ctx.lineWidth = size * 0.5;
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                    
+                    // Draw star
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    
+                    const finalColor = this.color.replace(')', `, ${this.opacity})`).replace('rgb', 'rgba');
+                    ctx.fillStyle = finalColor;
+                    ctx.fill();
+                    
+                    // Glow effect for closer stars
+                    if (this.z < 1000) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, size * 2, 0, Math.PI * 2);
+                        ctx.fillStyle = this.color.replace(')', ', 0.1)').replace('rgb', 'rgba');
+                        ctx.fill();
+                    }
+                }
+                
+                update() {
+                    // Move star towards viewer
+                    this.z -= 1.5; // Speed
+                    
+                    // Reset star if it's too close
+                    if (this.z < 100 || 
+                        this.x < -canvas.width || this.x > canvas.width * 2 || 
+                        this.y < -canvas.height || this.y > canvas.height * 2) {
+                        this.reset();
+                    }
+                    
+                    // Mouse influence on star movement (when active)
+                    if (mouse.active) {
+                        // Calculate mouse influence based on star depth
+                        const scale = 1500 / this.z;
+                        const centerX = canvas.width / 2;
+                        const centerY = canvas.height / 2;
+                        
+                        const moveX = (mouse.x - centerX) * 0.01;
+                        const moveY = (mouse.y - centerY) * 0.01;
+                        
+                        this.x += moveX;
+                        this.y += moveY;
+                        
+                        // Add current position to trail
+                        if (this.trail.length >= this.trailLength) {
+                            this.trail.pop();
+                        }
+                        
+                        this.trail.unshift({
+                            x: this.x,
+                            y: this.y,
+                            z: this.z + 50
+                        });
+                    }
+                    
+                    // Subtle random movement
+                    this.x += (Math.random() - 0.5) * 0.3;
+                    this.y += (Math.random() - 0.5) * 0.3;
+                    
+                    // Blinking effect
+                    this.opacity += this.blinkSpeed * this.blinkDirection;
+                    if (this.opacity >= 1) {
+                        this.opacity = 1;
+                        this.blinkDirection = -1;
+                    } else if (this.opacity <= 0.5) {
+                        this.opacity = 0.5;
+                        this.blinkDirection = 1;
+                    }
+                }
+            }
+            
+            // Create stars
+            function createStars() {
+                stars.length = 0;
+                for (let i = 0; i < starCount; i++) {
+                    stars.push(new Star());
+                }
+            }
+            
+            // Handle resize
+            window.addEventListener('resize', function() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                createStars();
+            });
+            
+            // Mouse interactions
+            window.addEventListener('mousemove', function(e) {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+                mouse.active = true;
+            });
+            
+            window.addEventListener('mouseout', function() {
+                mouse.active = false;
+            });
+            
+            // Touch support
+            window.addEventListener('touchmove', function(e) {
+                if (e.touches.length > 0) {
+                    mouse.x = e.touches[0].clientX;
+                    mouse.y = e.touches[0].clientY;
+                    mouse.active = true;
+                }
+                e.preventDefault();
+            }, { passive: false });
+            
+            window.addEventListener('touchend', function() {
+                setTimeout(() => {
+                    mouse.active = false;
+                }, 3000);
+            });
+            
+            // Animation loop
+            function animate() {
+                ctx.fillStyle = 'rgba(17, 17, 17, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw background gradient
+                ctx.fillStyle = createBackgroundGradient();
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Update and draw stars
+                for (let i = 0; i < stars.length; i++) {
+                    stars[i].update();
+                    stars[i].draw();
+                }
+                
+                // Create occasional shooting star
+                if (Math.random() < 0.01) {
+                    createShootingStar();
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            
+            // Shooting star effect
+            function createShootingStar() {
+                const shootingStar = {
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height / 2,
+                    length: Math.random() * 150 + 50,
+                    speed: Math.random() * 10 + 10,
+                    angle: Math.PI * (Math.random() * 0.2 + 0.1),
+                    life: 0,
+                    maxLife: 50
+                };
+                
+                const shootingStarAnimation = setInterval(() => {
+                    ctx.beginPath();
+                    ctx.moveTo(shootingStar.x, shootingStar.y);
+                    
+                    // Calculate end point
+                    const endX = shootingStar.x + Math.cos(shootingStar.angle) * shootingStar.length;
+                    const endY = shootingStar.y + Math.sin(shootingStar.angle) * shootingStar.length;
+                    
+                    ctx.lineTo(endX, endY);
+                    
+                    // Create gradient
+                    const gradient = ctx.createLinearGradient(
+                        shootingStar.x, shootingStar.y, 
+                        endX, endY
+                    );
+                    
+                    const progress = shootingStar.life / shootingStar.maxLife;
+                    const alpha = 1 - progress;
+                    
+                    gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+                    gradient.addColorStop(0.3, `rgba(152, 128, 255, ${alpha * 0.8})`);
+                    gradient.addColorStop(1, 'rgba(100, 100, 200, 0)');
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Move shooting star
+                    shootingStar.x += Math.cos(shootingStar.angle) * shootingStar.speed;
+                    shootingStar.y += Math.sin(shootingStar.angle) * shootingStar.speed;
+                    
+                    // Update life
+                    shootingStar.life++;
+                    
+                    if (shootingStar.life >= shootingStar.maxLife ||
+                        shootingStar.x < 0 || shootingStar.x > canvas.width ||
+                        shootingStar.y < 0 || shootingStar.y > canvas.height) {
+                        clearInterval(shootingStarAnimation);
+                    }
+                }, 20);
+            }
+            
+            // Initialize
+            createStars();
+            animate();
         });
-        
-        // Button click handler
-      
-        // Initialize and start animation
-        initialize();
-        addInitialDensity();
-        requestAnimationFrame(animate);
     </script>
 </body>
 </html>
