@@ -309,12 +309,19 @@ def youtube_audio_to_text():
         data = request.get_json()
         if not data or 'url' not in data:
             return jsonify({"error": "URL is required"}), 400
+            
         url = data.get("url", "")
         logger.info("Processing YouTube URL: %s", url)
+        
         transcript = process_youtube_audio(url, language="en-US")
+        
         if not transcript or not isinstance(transcript, str) or transcript.strip() == "":
             return jsonify({"error": "Failed to generate transcript"}), 400
-        client = Groq(api_key=GROQ_API_KEY)
+
+        # Initialize the Groq client
+        client = Groq(api_key="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")
+
+        # Create a chat completion request
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{
@@ -322,8 +329,15 @@ def youtube_audio_to_text():
                 "content": f"As a news journalist, summarize this text for a general audience in bullet points highlighting the main ethical points and even give your own opinion on this with proper headings: [{transcript}]"
             }]
         )
+
+        # Get the summarized text
         summary = response.choices[0].message.content
-        return jsonify({"transcript": transcript, "summary": summary})
+        
+        # Return the response as JSON
+        return jsonify({
+            "transcript": transcript,
+            "summary": summary
+        })
     except Exception as e:
         logger.error("YouTube processing error: %s", str(e))
         return jsonify({"error": f"Failed to process YouTube video: {str(e)}"}), 500
@@ -331,25 +345,22 @@ def youtube_audio_to_text():
 def process_youtube_audio(url, language="en-US"):
     """Download and transcribe audio from YouTube"""
     temp_audio_file = os.path.join(TEMP_DIR, f"yt_{int(os.urandom(4).hex(), 16)}.wav")
+    
     try:
-        # Check if URL is valid
-        if "youtube.com" not in url and "youtu.be" not in url:
-            logger.warning(f"URL may not be a valid YouTube URL: {url}")
-        
-        logger.info(f"Attempting to download audio from: {url}")
         audio_file = download_audio(url, temp_audio_file)
         if not audio_file:
             logger.error("Failed to download audio from YouTube")
-            return "Failed to download audio from the provided URL. Please check if the video exists and is publicly accessible."
-        
-        logger.info(f"Starting transcription of file: {audio_file}")
+            return None
+
         transcript = transcribe_in_chunks(audio_file, language=language)
         logger.info("Transcription completed")
         return transcript
+        
     except Exception as e:
         logger.error("Error in YouTube audio processing: %s", str(e))
-        return f"Error processing YouTube audio: {str(e)}"
+        return None
     finally:
+        # Cleanup the audio file
         if os.path.exists(temp_audio_file):
             try:
                 os.remove(temp_audio_file)
@@ -363,14 +374,19 @@ def transcribe_in_chunks(audio_path, chunk_length_ms=90000, language="en-US"):
     audio = AudioSegment.from_wav(audio_path)
     chunks = make_chunks(audio, chunk_length_ms)
     full_transcript = ""
+
     logger.info("Splitting audio into %d chunks...", len(chunks))
+
     for i, chunk in enumerate(chunks):
         logger.info("Transcribing chunk %d/%d...", i+1, len(chunks))
         chunk_path = os.path.join(TEMP_DIR, f"chunk_{i}.wav")
+        
         try:
             chunk.export(chunk_path, format="wav")
+
             with sr.AudioFile(chunk_path) as source:
                 audio_data = recognizer.record(source)
+
             try:
                 text = recognizer.recognize_google(audio_data, language=language)
                 full_transcript += text + " "
@@ -383,27 +399,24 @@ def transcribe_in_chunks(audio_path, chunk_length_ms=90000, language="en-US"):
         finally:
             if os.path.exists(chunk_path):
                 os.remove(chunk_path)
+
     return full_transcript.strip()
 
 def download_audio(url, output_path):
     """Download audio from YouTube URL"""
     ydl_opts = {
-        'format': 'bestaudio/best',  # Try best audio, fallback to best overall
+        'format': 'bestaudio',
         'outtmpl': os.path.join(TEMP_DIR, 'temp.%(ext)s'),
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
             'preferredquality': '192',
         }],
-        'quiet': False,  # Set to False for debugging
-        'ignoreerrors': False,  # Don't ignore errors
-        'no_warnings': False,  # Show warnings
-        'verbose': True,  # More verbose output
+        'quiet': True,
     }
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            logger.info(f"Video information retrieved: {info.get('title', 'Unknown title')}")
             ydl.download([url])
         
         temp_file = os.path.join(TEMP_DIR, "temp.wav")
@@ -411,20 +424,6 @@ def download_audio(url, output_path):
             os.rename(temp_file, output_path)
             return output_path
         else:
-            # Try to find any downloaded file
-            for file in os.listdir(TEMP_DIR):
-                if file.startswith("temp."):
-                    logger.info(f"Found alternative downloaded file: {file}")
-                    alt_file = os.path.join(TEMP_DIR, file)
-                    # Convert to wav if not already
-                    if not file.endswith(".wav"):
-                        sound = AudioSegment.from_file(alt_file)
-                        sound.export(output_path, format="wav")
-                        os.remove(alt_file)
-                    else:
-                        os.rename(alt_file, output_path)
-                    return output_path
-                    
             logger.error("Downloaded audio file not found")
             return None
     except Exception as e:
