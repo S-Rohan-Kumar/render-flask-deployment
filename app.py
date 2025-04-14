@@ -45,7 +45,7 @@ app.config['MYSQL_PORT'] = 3306
 mysql = MySQL(app)
 
 # API keys from environment variables
-
+GROQ_API_KEY = os.getenv('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')
 
 # With this:
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -308,21 +308,12 @@ def youtube_audio_to_text():
     try:
         data = request.get_json()
         if not data or 'url' not in data:
-            logger.error("No URL provided in request")
             return jsonify({"error": "URL is required"}), 400
-
         url = data.get("url", "")
         logger.info("Processing YouTube URL: %s", url)
-
         transcript = process_youtube_audio(url, language="en-US")
         if not transcript or not isinstance(transcript, str) or transcript.strip() == "":
-            logger.error("Failed to generate transcript")
             return jsonify({"error": "Failed to generate transcript"}), 400
-
-        if not GROQ_API_KEY:
-            logger.error("GROQ_API_KEY not set")
-            return jsonify({"error": "API key missing"}), 500
-
         client = Groq(api_key=GROQ_API_KEY)
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -332,32 +323,22 @@ def youtube_audio_to_text():
             }]
         )
         summary = response.choices[0].message.content
-
-        logger.info("YouTube processing completed successfully")
-        return jsonify({
-            "transcript": transcript,
-            "summary": summary
-        })
+        return jsonify({"transcript": transcript, "summary": summary})
     except Exception as e:
-        logger.error("YouTube processing error: %s", str(e), exc_info=True)
+        logger.error("YouTube processing error: %s", str(e))
         return jsonify({"error": f"Failed to process YouTube video: {str(e)}"}), 500
 
 def process_youtube_audio(url, language="en-US"):
     """Download and transcribe audio from YouTube"""
     temp_audio_file = os.path.join(TEMP_DIR, f"yt_{int(os.urandom(4).hex(), 16)}.wav")
-    logger.debug(f"Temp audio file path: {temp_audio_file}")
-
     try:
         audio_file = download_audio(url, temp_audio_file)
         if not audio_file:
             logger.error("Failed to download audio from YouTube")
             return None
-
-        logger.debug(f"Audio downloaded to: {audio_file}")
         transcript = transcribe_in_chunks(audio_file, language=language)
         logger.info("Transcription completed")
         return transcript
-
     except Exception as e:
         logger.error("Error in YouTube audio processing: %s", str(e))
         return None
@@ -365,13 +346,40 @@ def process_youtube_audio(url, language="en-US"):
         if os.path.exists(temp_audio_file):
             try:
                 os.remove(temp_audio_file)
-                logger.debug("Audio file deleted: %s", temp_audio_file)
+                logger.info("Audio file deleted: %s", temp_audio_file)
             except Exception as e:
                 logger.error("Failed to delete audio file: %s", str(e))
 
+def transcribe_in_chunks(audio_path, chunk_length_ms=90000, language="en-US"):
+    """Break audio into chunks and transcribe each chunk"""
+    recognizer = sr.Recognizer()
+    audio = AudioSegment.from_wav(audio_path)
+    chunks = make_chunks(audio, chunk_length_ms)
+    full_transcript = ""
+    logger.info("Splitting audio into %d chunks...", len(chunks))
+    for i, chunk in enumerate(chunks):
+        logger.info("Transcribing chunk %d/%d...", i+1, len(chunks))
+        chunk_path = os.path.join(TEMP_DIR, f"chunk_{i}.wav")
+        try:
+            chunk.export(chunk_path, format="wav")
+            with sr.AudioFile(chunk_path) as source:
+                audio_data = recognizer.record(source)
+            try:
+                text = recognizer.recognize_google(audio_data, language=language)
+                full_transcript += text + " "
+            except sr.UnknownValueError:
+                full_transcript += "[Unrecognized] "
+                logger.warning("Chunk %d was not recognized", i+1)
+            except sr.RequestError as e:
+                full_transcript += f"[Request Error] "
+                logger.error("Request error in chunk %d: %s", i+1, str(e))
+        finally:
+            if os.path.exists(chunk_path):
+                os.remove(chunk_path)
+    return full_transcript.strip()
+
 def download_audio(url, output_path):
     """Download audio from YouTube URL"""
-    logger.debug(f"Downloading audio to: {output_path}")
     ydl_opts = {
         'format': 'bestaudio',
         'outtmpl': os.path.join(TEMP_DIR, 'temp.%(ext)s'),
@@ -381,112 +389,21 @@ def download_audio(url, output_path):
             'preferredquality': '192',
         }],
         'quiet': True,
-        'socket_timeout': 30,
-        'retries': 5,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     }
-
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-
         temp_file = os.path.join(TEMP_DIR, "temp.wav")
-        logger.debug(f"Checking for temp file: {temp_file}")
         if os.path.exists(temp_file):
             os.rename(temp_file, output_path)
-            logger.info(f"Audio saved to: {output_path}")
             return output_path
         else:
             logger.error("Downloaded audio file not found")
             return None
-    except yt_dlp.utils.DownloadError as e:
-        logger.error("yt_dlp download failed: %s", str(e))
-        return None
     except Exception as e:
         logger.error("Error downloading audio: %s", str(e))
         return None
 
-def transcribe_in_chunks(audio_path, chunk_length_ms=15000, language="en-US"):
-    """Break audio into chunks and transcribe each chunk using Google Speech Recognition"""
-    recognizer = sr.Recognizer()
-    audio = AudioSegment.from_wav(audio_path)
-    chunks = make_chunks(audio, chunk_length_ms)
-    full_transcript = ""
-
-    logger.info("Splitting audio into %d chunks...", len(chunks))
-
-    for i, chunk in enumerate(chunks):
-        chunk_path = os.path.join(TEMP_DIR, f"chunk_{i}.wav")
-        logger.debug(f"Processing chunk {i+1}/{len(chunks)}")
-        try:
-            chunk.export(chunk_path, format="wav")
-            with sr.AudioFile(chunk_path) as source:
-                audio_data = recognizer.record(source)
-            text = recognizer.recognize_google(audio_data, language=language)
-            full_transcript += text + " "
-        except sr.UnknownValueError:
-            logger.warning("Chunk %d was not recognized", i+1)
-            full_transcript += "[Unrecognized] "
-        except sr.RequestError as e:
-            logger.error("Request error in chunk %d: %s", i+1, str(e))
-            full_transcript += "[Request Error] "
-        except Exception as e:
-            logger.warning(f"Chunk {i+1} failed: {str(e)}")
-            full_transcript += "[Skipped] "
-        finally:
-            if os.path.exists(chunk_path):
-                try:
-                    os.remove(chunk_path)
-                    logger.debug(f"Removed chunk file: {chunk_path}")
-                except Exception as e:
-                    logger.error(f"Failed to remove chunk file {chunk_path}: {str(e)}")
-
-    logger.debug("Transcription completed")
-    return full_transcript.strip()
-
-# Update system-check for debugging
-@app.route('/system-check')
-def system_check():
-    """Check system dependencies"""
-    results = {}
-
-    # Check Tesseract
-    try:
-        results["tesseract"] = {
-            "path": TESSERACT_PATH,
-            "exists": os.path.exists(TESSERACT_PATH),
-            "version": subprocess.check_output([TESSERACT_PATH, '--version'], stderr=subprocess.STDOUT).decode().strip()
-        }
-    except Exception as e:
-        results["tesseract"] = {"error": str(e)}
-
-    # Check FFmpeg
-    try:
-        ffmpeg_output = subprocess.check_output(['ffmpeg', '-version'], stderr=subprocess.STDOUT).decode().strip()
-        results["ffmpeg"] = {
-            "version": ffmpeg_output.split('\n')[0],
-            "full_output": ffmpeg_output
-        }
-    except Exception as e:
-        results["ffmpeg"] = {"error": str(e)}
-
-    # Check temp directory
-    try:
-        results["temp_dir"] = {
-            "path": TEMP_DIR,
-            "exists": os.path.exists(TEMP_DIR),
-            "writable": os.access(TEMP_DIR, os.W_OK),
-            "disk_free": shutil.disk_usage(TEMP_DIR).free
-        }
-    except Exception as e:
-        results["temp_dir"] = {"error": str(e)}
-
-    # Check API key
-    results["groq_api"] = {
-        "key_set": bool(GROQ_API_KEY)
-    }
-
-    return jsonify(results)
 @app.route('/upload-pdf', methods=['POST'])
 def pdfimg():
     """Process uploaded PDF files"""
