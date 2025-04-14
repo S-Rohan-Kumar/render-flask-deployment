@@ -5,6 +5,18 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     libtesseract-dev \
     tesseract-ocr-eng \
+    tesseract-ocr-hin \
+    tesseract-ocr-tam \
+    tesseract-ocr-tel \
+    tesseract-ocr-kan \
+    tesseract-ocr-ori \
+    tesseract-ocr-pan \
+    tesseract-ocr-guj \
+    tesseract-ocr-ben \
+    tesseract-ocr-mal \
+    tesseract-ocr-urd \
+    tesseract-ocr-asm \
+    tesseract-ocr-san \
     ffmpeg \
     libsndfile1 \
     libpq-dev \
