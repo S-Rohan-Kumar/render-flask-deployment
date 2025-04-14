@@ -249,85 +249,175 @@ def main():
 
 @app.route('/imgtxt', methods=['POST'])
 def imgtxt():
-    """Extract text from an uploaded image"""
+    """Extract text from an uploaded image with language detection"""
     try:
         if 'image' not in request.files:
             return jsonify({"error": "No image uploaded"}), 400
         
         image_file = request.files['image']
         logger.info("Image uploaded: %s", image_file.filename)
-        text = extract_text(image_file)
+        
+        # Save the image temporarily
+        file_id = int(os.urandom(4).hex(), 16)
+        temp_image_path = os.path.join(TEMP_DIR, f"temp_image_{file_id}.png")
+        image_file.save(temp_image_path)
+        
+        # Dictionary mapping language codes to their full names
+        LANGUAGE_NAMES = {
+            'eng': 'English',
+            'hin': 'Hindi',
+            'kan': 'Kannada',
+            'tam': 'Tamil',
+            'tel': 'Telugu',
+            'mar': 'Marathi',
+            'ben': 'Bengali',
+            'guj': 'Gujarati',
+            'ori': 'Odia',
+            'pan': 'Punjabi',
+            'mal': 'Malayalam',
+            'urd': 'Urdu',
+            'asm': 'Assamese',
+            'san': 'Sanskrit'
+        }
+
+        # Unicode ranges for various Indian languages
+        UNICODE_RANGES = {
+            'Devanagari': (0x0900, 0x097F),  # Hindi, Marathi, Sanskrit
+            'Bengali': (0x0980, 0x09FF),
+            'Gurmukhi': (0x0A00, 0x0A7F),    # Punjabi
+            'Gujarati': (0x0A80, 0x0AFF),
+            'Oriya': (0x0B00, 0x0B7F),       # Odia
+            'Tamil': (0x0B80, 0x0BFF),
+            'Telugu': (0x0C00, 0x0C7F),
+            'Kannada': (0x0C80, 0x0CFF),
+            'Malayalam': (0x0D00, 0x0D7F),
+            'Sinhala': (0x0D80, 0x0DFF),
+            'Urdu': (0x0600, 0x06FF)         # Urdu uses Arabic script
+        }
+
+        def detect_script_from_text(text):
+            """
+            Detect which script is predominantly used in the text
+            based on Unicode character ranges.
+            """
+            if not text:
+                return "Unknown"
+            
+            # Count characters in each script
+            script_counts = {}
+            for char in text:
+                code_point = ord(char)
+                for script, (start, end) in UNICODE_RANGES.items():
+                    if start <= code_point <= end:
+                        script_counts[script] = script_counts.get(script, 0) + 1
+                        break
+            
+            # Check for English (Latin script)
+            latin_count = len(re.findall(r'[a-zA-Z]', text))
+            if latin_count > 0:
+                script_counts['Latin'] = latin_count
+            
+            # Find predominant script
+            if not script_counts:
+                return "Unknown"
+            
+            predominant_script = max(script_counts, key=script_counts.get)
+            return predominant_script
+
+        def get_tesseract_lang_code(script):
+            """Map script name to Tesseract language code"""
+            script_to_lang = {
+                'Devanagari': 'hin',
+                'Bengali': 'ben',
+                'Gurmukhi': 'pan',
+                'Gujarati': 'guj',
+                'Oriya': 'ori',
+                'Tamil': 'tam',
+                'Telugu': 'tel',
+                'Kannada': 'kan',
+                'Malayalam': 'mal',
+                'Latin': 'eng',
+                'Urdu': 'urd'
+            }
+            return script_to_lang.get(script, 'eng')
+
+        def extract_text_auto_language(image_path):
+            """
+            Try to detect language from image and extract text with appropriate OCR.
+            """
+            try:
+                # Open the image file
+                img = Image.open(image_path)
+                
+                # Initial OCR with multiple languages to detect script
+                initial_text = pytesseract.image_to_string(
+                    img, 
+                    lang='eng+hin+tam+tel+kan+ori+pan+guj+ben+mal+urd',
+                    config='--psm 6'  # Assume a single uniform block of text
+                )
+                
+                # Detect the script from the initial OCR
+                detected_script = detect_script_from_text(initial_text)
+                
+                if detected_script == "Unknown":
+                    # If script detection failed, default to multi-language
+                    final_text = initial_text
+                    detected_lang_code = 'mul'  # Multiple languages
+                    detected_lang_name = 'Multiple/Unknown'
+                else:
+                    # Get the corresponding Tesseract language code
+                    lang_code = get_tesseract_lang_code(detected_script)
+                    
+                    # Second OCR pass with the specific detected language
+                    final_text = pytesseract.image_to_string(
+                        img, 
+                        lang=lang_code,
+                        config='--psm 6'  # Assume a single uniform block of text
+                    )
+                    
+                    detected_lang_code = lang_code
+                    detected_lang_name = LANGUAGE_NAMES.get(lang_code, detected_script)
+                
+                return final_text.strip(), detected_lang_name, detected_script
+            
+            except Exception as e:
+                logger.error(f"Error in language detection: {str(e)}")
+                return f"Error extracting text: {str(e)}", "Unknown", "Error"
+        
+        # Extract text with auto language detection
+        text, detected_language, detected_script = extract_text_auto_language(temp_image_path)
+        
+        # Use Groq for summarization
         client = Groq(api_key=GROQ_API_KEY)
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{
                 "role": "user",
-                "content": f"summarize this in a very beautiful in the language the input is provided:{text}"
+                "content": f"summarize this in a very beautiful way in the same language as the input: {text}"
             }]
         )
         summary = response.choices[0].message.content
-        return jsonify({"txt": summary})
+        
+        # Clean up temporary file
+        if os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
+            
+        return jsonify({
+            "text": text,
+            "summary": summary,
+            "language": detected_language,
+            "script": detected_script
+        })
     except Exception as e:
         logger.error("Error in image to text: %s", str(e))
         return jsonify({"error": f"Failed to process image: {str(e)}"}), 500
-
-def extract_pdf_in_chunks(pdf_path, chunk_size=4000, by_pages=False):
-    """Extract text from a PDF in chunks"""
-    chunks = []
-    try:
-        with pdfplumber.open(pdf_path) as pdf:
-            total_pages = min(100, len(pdf.pages))
-            full_text = ""
-            for page_num in range(total_pages):
-                page_text = pdf.pages[page_num].extract_text() or ""
-                full_text += page_text + "\n"
-            
-            if by_pages:
-                for i in range(0, total_pages, chunk_size):
-                    start_page = i
-                    end_page = min(i + chunk_size, total_pages)
-                    chunk_text = ""
-                    for j in range(start_page, end_page):
-                        page_text = pdf.pages[j].extract_text() or ""
-                        chunk_text += page_text + "\n"
-                    if chunk_text.strip():
-                        chunks.append(chunk_text)
-            else:
-                for i in range(0, len(full_text), chunk_size):
-                    chuck = full_text[i:i + chunk_size]
-                    if chuck.strip():
-                        chunks.append(chuck)
-        return chunks
-    except Exception as e:
-        logger.error("Error extracting PDF text: %s", str(e))
-        return [f"Error extracting text: {str(e)}"]
-
-@app.route('/ytaudio', methods=['POST'])
-def youtube_audio_to_text():
-    """Extract and transcribe audio from YouTube videos"""
-    try:
-        data = request.get_json()
-        if not data or 'url' not in data:
-            return jsonify({"error": "URL is required"}), 400
-        url = data.get("url", "")
-        logger.info("Processing YouTube URL: %s", url)
-        transcript = process_youtube_audio(url, language="en-US")
-        if not transcript or not isinstance(transcript, str) or transcript.strip() == "":
-            return jsonify({"error": "Failed to generate transcript"}), 400
-        client = Groq(api_key=GROQ_API_KEY)
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{
-                "role": "user",
-                "content": f"As a news journalist, summarize this text for a general audience in bullet points highlighting the main ethical points and even give your own opinion on this with proper headings: [{transcript}]"
-            }]
-        )
-        summary = response.choices[0].message.content
-        return jsonify({"transcript": transcript, "summary": summary})
-    except Exception as e:
-        logger.error("YouTube processing error: %s", str(e))
-        return jsonify({"error": f"Failed to process YouTube video: {str(e)}"}), 500
-
+    finally:
+        # Ensure temp file is cleaned up even if there's an error
+        if 'temp_image_path' in locals() and os.path.exists(temp_image_path):
+            try:
+                os.remove(temp_image_path)
+            except Exception as e:
+                logger.error(f"Failed to remove temp image: {str(e)}")
 def process_youtube_audio(url, language="en-US"):
     """Download and transcribe audio from YouTube"""
     temp_audio_file = os.path.join(TEMP_DIR, f"yt_{int(os.urandom(4).hex(), 16)}.wav")
