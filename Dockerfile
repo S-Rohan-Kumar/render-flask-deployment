@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.12
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -36,7 +36,6 @@ ENV PORT=5000
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 # Verify installations
 RUN tesseract --version && ffmpeg -version
