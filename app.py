@@ -15,7 +15,6 @@ from pydub.utils import make_chunks
 from werkzeug.utils import secure_filename
 import pdfplumber
 import bcrypt
-from langi import extract_text
 import re
 import logging
 import subprocess
@@ -46,7 +45,7 @@ app.config['MYSQL_PORT'] = 3306
 mysql = MySQL(app)
 
 # API keys from environment variables
-GROQ_API_KEY = os.getenv('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')
+
 
 # With this:
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -263,7 +262,7 @@ def imgtxt():
             model="llama-3.3-70b-versatile",
             messages=[{
                 "role": "user",
-                "content": f"summarize this in the original language provided with important bullet points:{text}"
+                "content": f"summarize this in a very beautiful in the language the input is provided:{text}"
             }]
         )
         summary = response.choices[0].message.content
