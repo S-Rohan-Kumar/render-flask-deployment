@@ -263,7 +263,7 @@ def imgtxt():
             model="llama-3.3-70b-versatile",
             messages=[{
                 "role": "user",
-                "content": f"summarize this in a very beautiful in the language the input is provided:{text}"
+                "content": f"summarize this in the original language provided with important bullet points:{text}"
             }]
         )
         summary = response.choices[0].message.content
