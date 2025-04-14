@@ -332,16 +332,23 @@ def process_youtube_audio(url, language="en-US"):
     """Download and transcribe audio from YouTube"""
     temp_audio_file = os.path.join(TEMP_DIR, f"yt_{int(os.urandom(4).hex(), 16)}.wav")
     try:
+        # Check if URL is valid
+        if "youtube.com" not in url and "youtu.be" not in url:
+            logger.warning(f"URL may not be a valid YouTube URL: {url}")
+        
+        logger.info(f"Attempting to download audio from: {url}")
         audio_file = download_audio(url, temp_audio_file)
         if not audio_file:
             logger.error("Failed to download audio from YouTube")
-            return None
+            return "Failed to download audio from the provided URL. Please check if the video exists and is publicly accessible."
+        
+        logger.info(f"Starting transcription of file: {audio_file}")
         transcript = transcribe_in_chunks(audio_file, language=language)
         logger.info("Transcription completed")
         return transcript
     except Exception as e:
         logger.error("Error in YouTube audio processing: %s", str(e))
-        return None
+        return f"Error processing YouTube audio: {str(e)}"
     finally:
         if os.path.exists(temp_audio_file):
             try:
@@ -381,29 +388,48 @@ def transcribe_in_chunks(audio_path, chunk_length_ms=90000, language="en-US"):
 def download_audio(url, output_path):
     """Download audio from YouTube URL"""
     ydl_opts = {
-        'format': 'bestaudio',
+        'format': 'bestaudio/best',  # Try best audio, fallback to best overall
         'outtmpl': os.path.join(TEMP_DIR, 'temp.%(ext)s'),
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
             'preferredquality': '192',
         }],
-        'quiet': True,
+        'quiet': False,  # Set to False for debugging
+        'ignoreerrors': False,  # Don't ignore errors
+        'no_warnings': False,  # Show warnings
+        'verbose': True,  # More verbose output
     }
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            logger.info(f"Video information retrieved: {info.get('title', 'Unknown title')}")
             ydl.download([url])
+        
         temp_file = os.path.join(TEMP_DIR, "temp.wav")
         if os.path.exists(temp_file):
             os.rename(temp_file, output_path)
             return output_path
         else:
+            # Try to find any downloaded file
+            for file in os.listdir(TEMP_DIR):
+                if file.startswith("temp."):
+                    logger.info(f"Found alternative downloaded file: {file}")
+                    alt_file = os.path.join(TEMP_DIR, file)
+                    # Convert to wav if not already
+                    if not file.endswith(".wav"):
+                        sound = AudioSegment.from_file(alt_file)
+                        sound.export(output_path, format="wav")
+                        os.remove(alt_file)
+                    else:
+                        os.rename(alt_file, output_path)
+                    return output_path
+                    
             logger.error("Downloaded audio file not found")
             return None
     except Exception as e:
         logger.error("Error downloading audio: %s", str(e))
         return None
-
 @app.route('/upload-pdf', methods=['POST'])
 def pdfimg():
     """Process uploaded PDF files"""
