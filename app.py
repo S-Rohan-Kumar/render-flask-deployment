@@ -15,6 +15,7 @@ from pydub.utils import make_chunks
 from werkzeug.utils import secure_filename
 import pdfplumber
 import bcrypt
+from langi import extract_text_auto_language
 import re
 import logging
 import subprocess
@@ -250,27 +251,112 @@ def main():
 @app.route('/imgtxt', methods=['POST'])
 def imgtxt():
     """Extract text from an uploaded image"""
+    temp_path = None
     try:
+        # Check if image file exists in request
         if 'image' not in request.files:
             return jsonify({"error": "No image uploaded"}), 400
         
         image_file = request.files['image']
-        logger.info("Image uploaded: %s", image_file.filename)
-        text = extract_text(image_file)
-        client = Groq(api_key=GROQ_API_KEY)
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{
-                "role": "user",
-                "content": f"summarize this in a very beautiful in the language the input is provided:{text}"
-            }]
-        )
-        summary = response.choices[0].message.content
-        return jsonify({"txt": summary})
+        
+        # Check if filename is empty
+        if image_file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+            
+        # Check file type
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'webp'}
+        if '.' not in image_file.filename or \
+           image_file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+            return jsonify({"error": "File type not allowed. Please upload an image."}), 400
+        
+        # Check file size
+        image_file.seek(0, os.SEEK_END)
+        file_size = image_file.tell()
+        image_file.seek(0)
+        
+        if file_size > 10 * 1024 * 1024:  # 10MB limit for images
+            return jsonify({"error": "Image file too large (max 10MB)"}), 413
+        
+        # Create a temporary file for processing
+        filename = secure_filename(image_file.filename)
+        temp_path = os.path.join(TEMP_DIR, f"img_{int(os.urandom(4).hex(), 16)}_{filename}")
+        image_file.save(temp_path)
+        
+        logger.info("Image uploaded and saved: %s", temp_path)
+        
+        # Extract text using pytesseract with language detection
+        try:
+            # If using the language detection version from paste-2.txt
+            text, detected_lang = extract_text_auto_language(temp_path)
+            logger.info(f"Text extracted. Detected language: {detected_lang}")
+        except Exception as inner_e:
+            # Fall back to basic extraction if language detection fails
+            logger.warning(f"Language detection failed: {str(inner_e)}. Falling back to basic extraction.")
+            image = Image.open(temp_path)
+            text = pytesseract.image_to_string(image)
+        
+        # Check if text extraction was successful
+        if not text or text.strip() == "":
+            return jsonify({"error": "Could not extract text from image. Please ensure the image contains clear text."}), 400
+        
+        logger.info("Successfully extracted text of length: %d characters", len(text))
+        
+        # Check if API key is available
+        if not GROQ_API_KEY:
+            logger.error("GROQ_API_KEY not set")
+            return jsonify({"error": "API configuration error. Please contact support."}), 500
+        
+        # Process with LLM for summarization
+        try:
+            client = Groq(api_key=GROQ_API_KEY)
+            
+            # Truncate text if too long for API
+            max_input_length = 32000
+            truncated_text = text[:max_input_length] if len(text) > max_input_length else text
+            
+            if len(text) > max_input_length:
+                logger.warning("Text truncated from %d to %d characters for API", len(text), max_input_length)
+            
+            # Make API call with timeout
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{
+                    "role": "user",
+                    "content": f"Summarize this text while preserving the main ideas and key information. Respond in the same language as the input text: {truncated_text}"
+                }],
+                timeout=45  # 45 second timeout
+            )
+            
+            summary = response.choices[0].message.content
+            
+            # Return both the original text and the summary
+            return jsonify({
+                "success": True,
+                "original_text": text,
+                "txt": summary
+            })
+            
+        except Exception as api_error:
+            logger.error("API error in summarization: %s", str(api_error))
+            # Return the extracted text even if summarization fails
+            return jsonify({
+                "success": True,
+                "original_text": text,
+                "txt": text,
+                "note": "Summarization failed, returning original extracted text."
+            })
+            
     except Exception as e:
-        logger.error("Error in image to text: %s", str(e))
+        logger.error("Error in image to text: %s", str(e), exc_info=True)
         return jsonify({"error": f"Failed to process image: {str(e)}"}), 500
-
+    finally:
+        # Clean up temporary file
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+                logger.debug("Temporary image file deleted: %s", temp_path)
+            except Exception as cleanup_error:
+                logger.warning("Failed to delete temporary file: %s", str(cleanup_error))
 def extract_pdf_in_chunks(pdf_path, chunk_size=4000, by_pages=False):
     """Extract text from a PDF in chunks"""
     chunks = []
