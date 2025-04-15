@@ -10,15 +10,6 @@ RUN apt-get update && \
     tesseract-ocr-tam \
     tesseract-ocr-tel \
     tesseract-ocr-kan \
-    tesseract-ocr-ori \
-    tesseract-ocr-pan \
-    tesseract-ocr-guj \
-    tesseract-ocr-ben \
-    tesseract-ocr-mal \
-    tesseract-ocr-urd \
-    tesseract-ocr-san \
-    tesseract-ocr-mar \
-    tesseract-ocr-asm \
     ffmpeg \
     libsndfile1 \
     libpq-dev \
