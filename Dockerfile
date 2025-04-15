@@ -1,7 +1,14 @@
-# Use a slim Python image
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
-# Install runtime system dependencies and OCR language packs (only keep what you need!)
+# Install apt tools and basic dependencies first
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils \
+    gnupg \
+    dirmngr \
+    ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install OCR and media system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     tesseract-ocr \
@@ -23,10 +30,9 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /app
 
-# Copy and install Python dependencies first (for caching)
+# Copy requirements and install Python packages
 COPY requirements.txt .
 
-# Install build dependencies temporarily, install Python packages, then clean up
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -39,7 +45,7 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set up folders with permissions
+# Setup app folders and permissions
 RUN mkdir -p /app/temp /app/templates /app/static && chmod -R 777 /app/temp /app/templates /app/static
 
 # Environment variables
@@ -49,15 +55,15 @@ ENV PYTHONUNBUFFERED=1 \
     TEMP_DIR=/app/temp \
     PORT=5000
 
-# Copy the rest of the app
+# Copy application code
 COPY . .
 
-# Final permissions
+# Final permission setting
 RUN chmod -R 755 /app
 
-# Health check (Render friendly)
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:$PORT/health || exit 1
 
-# Run the app
+# Start command
 CMD ["sh", "-c", "gunicorn --workers=4 --timeout=300 --bind 0.0.0.0:$PORT app:app"]
